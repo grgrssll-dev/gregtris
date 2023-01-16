@@ -1,12 +1,11 @@
-import Tetris from './lib/tetris.js';
+import Tetris from './src/tetris.js';
 
 function init() {
     const canvas = document.getElementById('board');
     const parent = canvas.parentElement;
     const dim = Math.min(parent.clientWidth, parent.clientHeight);
-    const tetris = new Tetris({
+    const tetris = new Tetris(canvas,{
         dim,
-        canvas,
         debug: true,
     });
     tetris.init().then(() => {
