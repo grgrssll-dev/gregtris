@@ -8,7 +8,11 @@ main {
     max-width: 1200px;
     margin: 0 auto;
     background: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 canvas {
     display: block;
+    border: 1px #000 solid;
 }
