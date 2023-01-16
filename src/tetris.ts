@@ -15,46 +15,10 @@ import {
 } from './constants';
 import Piece from './piece';
 import { Container } from './interfaces';
+import gamePieces from './gamePieces';
 
 
-
-const piece0 = new Piece('rgba(0, 255, 255, 0.5)', [
-    [1,1,1,1],
-]);
-const piece1 = new Piece('rgba(0, 0, 255, 0.5)', [
-    [1,0,0],
-    [1,1,1],
-]);
-const piece2 = new Piece('rgba(255, 127, 0, 0.5)', [
-    [0,0,1],
-    [1,1,1],
-]);
-const piece3 = new Piece('rgba(255, 255, 0, 0.5)', [
-    [1,1],
-    [1,1],
-]);
-const piece4 = new Piece('rgba(0, 255, 0, 0.5)', [
-    [0,1,1],
-    [1,1,0],
-]);
-const piece5 = new Piece('rgba(255, 0, 255, 0.5)', [
-    [1,1,0],
-    [0,1,1],
-]);
-const piece6 = new Piece('rgba(255, 0, 0, 0.5)', [
-    [0,1,0],
-    [1,1,1],
-]);
-
-const pieces = [
-    piece0,
-    piece1,
-    piece2,
-    piece3,
-    piece4,
-    piece5,
-    piece6,
-];
+const gamePiecesCount = Object.keys(gamePieces).length;
 
 export default class Tetris {
     opts = {
@@ -130,12 +94,12 @@ export default class Tetris {
         this.drawOutlilnes();
         this.drawGrid();
 
-        this.nextPiece = pieces[rand(0, pieces.length - 1)].clone().rotate(rand(0, 3) as Direction);
+        this.nextPiece = gamePieces[rand(0, gamePiecesCount - 1)].clone().rotate(rand(0, 3) as Direction);
 
-        const p1 = piece0.clone().rotate(DIR_UP);
-        const p2 = piece2.clone().rotate(DIR_RIGHT);
-        const p3 = piece4.clone().rotate(DIR_LEFT);
-        const p4 = piece6.clone().rotate(DIR_DOWN);
+        const p1 = gamePieces[0].clone().rotate(DIR_UP);
+        const p2 = gamePieces[2].clone().rotate(DIR_RIGHT);
+        const p3 = gamePieces[4].clone().rotate(DIR_LEFT);
+        const p4 = gamePieces[6].clone().rotate(DIR_DOWN);
         this.drawPiece(p1, 1, 1);
         this.drawPiece(p2, 6, 2);
         this.drawPiece(p3, 3, 5);
@@ -159,7 +123,7 @@ export default class Tetris {
 
     setNextPiece() {
         this.currentPiece = this.nextPiece;
-        this.nextPiece = pieces[rand(0, pieces.length - 1)].clone().rotate(rand(0, 3) as Direction);
+        this.nextPiece = gamePieces[rand(0, gamePiecesCount - 1)].clone().rotate(rand(0, 3) as Direction);
         this.placePiece(this.nextPiece, this.unit(13), this.unit(18));
     }
 

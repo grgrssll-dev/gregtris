@@ -3,10 +3,12 @@ import { Direction, DIR_UP } from './directions';
 import rotator, { rotate0 } from './rotator';
 
 export default class Piece {
+    private name: string;
     private color: string;
     private matrix: Matrix;
 
-    constructor(color: string, matrix: Matrix) {
+    constructor(name: string, color: string, matrix: Matrix) {
+        this.name = name;
         this.color = color;
         this.matrix = matrix;
     }
@@ -15,6 +17,9 @@ export default class Piece {
     }
     getCols(): number {
         return this.matrix[0].length;
+    }
+    getName(): string {
+        return this.name;
     }
     getColor(): string {
         return this.color;
@@ -36,6 +41,6 @@ export default class Piece {
         return this;
     }
     clone(): Piece {
-        return new Piece(this.color, rotate0(this.matrix));
+        return new Piece(this.name, this.color, rotate0(this.matrix));
     }
 }
