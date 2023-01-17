@@ -60,7 +60,7 @@ const KEYS_LEFT = [KEY_LEFT, KEY_A];
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
-const maxDir = Math.min(...directionsArray);
+const maxDir = Math.max(...directionsArray);
 
 
 export default class Tetris {
@@ -93,7 +93,7 @@ export default class Tetris {
 
     currentX = 0;
     currentY = 0;
-    currentPiece: CurrentPiece;
+    currentPiece!: CurrentPiece;
     nextPiece: Piece;
 
     gameState: GameStates = GAME_STATE_BEFORE_START;
@@ -137,11 +137,12 @@ export default class Tetris {
             }
             this.bucket.push(row);
         }
-        this.drawOutlilnes();
         this.drawGrid();
+        this.drawOutlilnes();
+        this.setText();
 
         this.nextPiece = this.getRandomPiece();
-        this.currentPiece = this.setNextPiece();
+        this.setNextPiece();
 
         const p1 = gamePieces.FLAT.clone(DIR_UP);
         const p2 = gamePieces.L_RIGHT.clone(DIR_RIGHT);
@@ -151,9 +152,6 @@ export default class Tetris {
         this.drawPieceOnBoard(p2, 6, 2);
         this.drawPieceOnBoard(p3, 3, 5);
         this.drawPieceOnBoard(p4, 5, 7);
-        
-        this.setText();
-        this.setNextPiece();
 
         window.addEventListener('keypress', this.keyListenerBound);
     }
@@ -245,7 +243,9 @@ export default class Tetris {
     }
 
     getRandomPiece() {
-        return this.randItem<Piece>(gamePiecesArray).clone(this.randDirection());
+        gamePiecesArray.sort();
+        const direction = this.randDirection();
+        return this.randItem<Piece>(gamePiecesArray).clone(direction);
     }
 
     setNextPiece(): CurrentPiece {
@@ -253,6 +253,7 @@ export default class Tetris {
         const y = 0;
         this.currentPiece = CurrentPiece.fromPiece(this.nextPiece, x, y);
         this.nextPiece = this.getRandomPiece();
+        this.log('NextPiece', this.nextPiece);
         this.placePiece(this.nextPiece, this.conts.next.x + MARGIN, this.conts.next.y + (MARGIN * 2));
         return this.currentPiece;
     }
@@ -292,13 +293,45 @@ export default class Tetris {
     }
     
     drawOutlilnes() {
+        const {
+            board,
+            title,
+            info,
+            next,
+            score,
+        } = this.conts;
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = MX;
-        this.ctx.strokeRect(this.conts.board.x, this.conts.board.y, this.conts.board.width, this.conts.board.height);
-        this.ctx.strokeRect(this.conts.title.x, this.conts.title.y, this.conts.title.width, this.conts.title.height);
-        this.ctx.strokeRect(this.conts.info.x, this.conts.info.y, this.conts.info.width, this.conts.info.height);
-        this.ctx.strokeRect(this.conts.next.x, this.conts.next.y, this.conts.next.width, this.conts.next.height);
-        this.ctx.strokeRect(this.conts.score.x, this.conts.score.y, this.conts.score.width, this.conts.score.height);
+        this.ctx.strokeRect(
+            this.gridToPx(board.x), 
+            this.gridToPx(board.y), 
+            this.gridToPx(board.width), 
+            this.gridToPx(board.height)
+        );
+        this.ctx.strokeRect(
+            this.gridToPx(title.x), 
+            this.gridToPx(title.y), 
+            this.gridToPx(title.width), 
+            this.gridToPx(title.height)
+        );
+        this.ctx.strokeRect(
+            this.gridToPx(info.x), 
+            this.gridToPx(info.y), 
+            this.gridToPx(info.width), 
+            this.gridToPx(info.height)
+        );
+        this.ctx.strokeRect(
+            this.gridToPx(next.x), 
+            this.gridToPx(next.y), 
+            this.gridToPx(next.width), 
+            this.gridToPx(next.height)
+        );
+        this.ctx.strokeRect(
+            this.gridToPx(score.x), 
+            this.gridToPx(score.y), 
+            this.gridToPx(score.width), 
+            this.gridToPx(score.height)
+        );
     }
 
     fitPiece(piece: Piece, x: number, y: number): { safeX: number, safeY: number} {

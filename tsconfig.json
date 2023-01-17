@@ -1,28 +1,24 @@
-{
+  {
     "compilerOptions": {
-      "allowJs": false,
-      "useUnknownInCatchVariables": false,
-      "downlevelIteration": true,
-      "esModuleInterop": true,
-      "lib": ["es6", "dom", "es2016"],
-      "module": "commonjs",
-      "noImplicitAny": true,
-      "outDir": "dist",
-      "resolveJsonModule": true,
-      "rootDirs": ["src"],
-      "skipLibCheck": true,
-      "sourceMap": true,
-      "strict": true,
-      "target": "es6",
-      "typeRoots": ["./node_modules/@types/", "src/@types"]
+        "useUnknownInCatchVariables": false,
+        "noImplicitAny": true,
+        "noEmitOnError": true,
+        "removeComments": false,
+        "rootDirs": ["src"],
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "strict": true,
+        "target": "es2017",
+        "lib": [
+            "DOM",
+            "DOM.Iterable",
+            "ESNext"
+         ],
+        "outDir": "dist",
+        "module": "amd",
+        "outFile": "dist/tetris.js"
     },
     "include": [
-      "./**/*",
-    ],
-    "exclude": [
-      "node_modules",
-      "dist",
-      "*.js"
+        "src/**/*"
     ]
   }
-  
