@@ -1,7 +1,17 @@
 import { rand } from './utils';
-import { Direction, directionsArray } from './directions';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
-import { DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT } from './directions';
+import Piece from './piece';
+import { Container, CoordType } from './interfaces';
+import gamePieces from './gamePieces';
+import { 
+    Direction,
+    MovementDirection,
+    directionsArray,
+    DIR_UP,
+    DIR_RIGHT,
+    DIR_DOWN,
+    DIR_LEFT,
+} from './directions';
 import {
     ROWS,
     COLS,
@@ -14,9 +24,26 @@ import {
     ALPHA_DIVISOR,
     DIMENSION_RATIO,
 } from './constants';
-import Piece from './piece';
-import { Container, CoordType } from './interfaces';
-import gamePieces from './gamePieces';
+
+const KEY_SPACE = 32;
+
+const KEY_LEFT = 37;
+const KEY_A = 65;
+
+const KEY_UP = 38;
+const KEY_W = 87;
+
+const KEY_RIGHT = 39;
+const KEY_D = 68;
+
+const KEY_DOWN = 40;
+const KEY_S = 83;
+
+const KEYS_UP = [KEY_UP, KEY_W];
+const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
+const KEYS_DOWN = [KEY_DOWN, KEY_S];
+const KEYS_LEFT = [KEY_LEFT, KEY_A];
+
 
 
 const gamePiecesArray = Object.values(gamePieces);
@@ -57,6 +84,8 @@ export default class Tetris {
     currentY = 0;
     currentPiece: Piece;
     nextPiece: Piece;
+
+    keyListenerBound = this.keyPressListener.bind(this);
 
     constructor(canvas: HTMLCanvasElement, opts: Record<any, any>) {
         this.canvas = canvas;
@@ -111,6 +140,44 @@ export default class Tetris {
         
         this.setText();
         this.setNextPiece();
+
+        window.addEventListener('keypress', this.keyListenerBound);
+    }
+
+    keyPressListener(e: KeyboardEvent) {
+        const keyCode = e.keyCode;
+        let handled = false;
+        if (KEYS_LEFT.includes(keyCode)) {
+            handled = true;
+            this.moveCurrentPiece(DIR_LEFT);
+        }
+        if (KEYS_RIGHT.includes(keyCode)) {
+            handled = true;
+            this.moveCurrentPiece(DIR_RIGHT);
+        }
+        if (KEYS_UP.includes(keyCode)) {
+            handled = true;
+            this.rotateCurrentPiece();
+        }
+        if (KEYS_DOWN.includes(keyCode)) {
+            handled = true;
+            this.dropCurrentPiece();
+        }
+        if (handled) {
+            e.preventDefault();
+        }
+    }
+
+    moveCurrentPiece(dir: MovementDirection) {
+        
+    }
+
+    rotateCurrentPiece() {
+        
+    }
+
+    dropCurrentPiece() {
+        
     }
 
     randDirection(): Direction {

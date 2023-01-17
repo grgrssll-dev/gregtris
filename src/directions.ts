@@ -10,8 +10,15 @@ const directions = Object.freeze({
     [DIR_DOWN]: DIR_DOWN,
 });
 
+const movementDirections = Object.freeze({
+    [DIR_RIGHT]: DIR_RIGHT,
+    [DIR_LEFT]: DIR_LEFT,
+})
+
 export const directionsArray = Object.values(directions);
 
 export type Direction = keyof typeof directions;
+
+export type MovementDirection = keyof typeof movementDirections;
 
 export default directions;
