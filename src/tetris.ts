@@ -3,7 +3,12 @@ import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import Piece from './piece';
 import CurrentPiece from './currentPiece';
 import { Container, CoordType, GameStates } from './interfaces';
-import gamePieces from './gamePieces';
+import gamePieces, {
+    FLAT,
+    L_RIGHT,
+    S_LEFT,
+    MIDDLE,
+} from './gamePieces';
 import { 
     Direction,
     MovementDirection,
@@ -69,7 +74,6 @@ export default class Tetris {
     height = 0;
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    sprite: HTMLImageElement|null;
 
     bucket: number[][] = [];
 
@@ -136,12 +140,13 @@ export default class Tetris {
         this.drawOutlilnes();
         this.drawGrid();
 
-        this.nextPiece = this.getNextPiece();
+        this.nextPiece = this.getRandomPiece();
+        this.currentPiece = this.setNextPiece();
 
-        const p1 = gamePieces[0].clone(DIR_UP);
-        const p2 = gamePieces[2].clone(DIR_RIGHT);
-        const p3 = gamePieces[4].clone(DIR_LEFT);
-        const p4 = gamePieces[6].clone(DIR_DOWN);
+        const p1 = gamePieces.FLAT.clone(DIR_UP);
+        const p2 = gamePieces.L_RIGHT.clone(DIR_RIGHT);
+        const p3 = gamePieces.S_LEFT.clone(DIR_LEFT);
+        const p4 = gamePieces.MIDDLE.clone(DIR_DOWN);
         this.drawPieceOnBoard(p1, 1, 1);
         this.drawPieceOnBoard(p2, 6, 2);
         this.drawPieceOnBoard(p3, 3, 5);
@@ -239,16 +244,17 @@ export default class Tetris {
         this.writeWord('NEXT', 12, 16);
     }
 
-    getNextPiece() {
+    getRandomPiece() {
         return this.randItem<Piece>(gamePiecesArray).clone(this.randDirection());
     }
 
-    setNextPiece() {
+    setNextPiece(): CurrentPiece {
         const x = Math.floor((COLS - this.nextPiece.getCols()) / 2);
         const y = 0;
         this.currentPiece = CurrentPiece.fromPiece(this.nextPiece, x, y);
-        this.nextPiece = this.getNextPiece();
+        this.nextPiece = this.getRandomPiece();
         this.placePiece(this.nextPiece, this.conts.next.x + MARGIN, this.conts.next.y + (MARGIN * 2));
+        return this.currentPiece;
     }
 
     gridToPx(gridCoord: number) :number {
@@ -420,21 +426,21 @@ export default class Tetris {
         // TODO
     }
 
-    log(...msg): void {
+    log(...msg :any[]): void {
         if (this.opts.debug === true) {
             console.log('[Tetris]', ...msg);
         }
     }
 
     init(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                this.sprite = img;
-                resolve();
-            };
-            img.onerror = reject;
-        });
+        return Promise.resolve();
+        // return new Promise((resolve, reject) => {
+        //     const img = new Image();
+        //     img.onload = () => {
+        //         resolve();
+        //     };
+        //     img.onerror = reject;
+        // });
     }
 
     resetGame() {

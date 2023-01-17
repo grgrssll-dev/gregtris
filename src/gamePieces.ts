@@ -45,6 +45,6 @@ const gamePieces = Object.freeze({
     S_LEFT,
     S_RIGHT,
     MIDDLE,
-});
+}) as Record<string, Piece>;
 
 export default gamePieces;

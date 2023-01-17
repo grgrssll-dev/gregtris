@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/tetris.ts",
   "scripts": {
-    "build": "tsc --build",
-    "clean": "tsc --build --clean"
+    "build": "tsc src/tetris.ts --out tetris.js",
+    "clean": "tsc --build --clean --out tetris.js"
   },
   "author": "",
   "license": "ISC",
