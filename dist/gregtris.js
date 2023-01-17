@@ -244,6 +244,16 @@ define("alphabet", ["require", "exports"], function (require, exports) {
             [0, 0, 0, 1, 1, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ],
+        'u': [
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
         'v': [
             [1, 1, 0, 0, 0, 1, 1, 0],
             [1, 1, 0, 0, 0, 1, 1, 0],
@@ -615,12 +625,14 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
     const KEY_DOWN = 'ArrowDown';
     const KEY_S = 's';
     const KEY_ENTER = 'Enter';
+    const KEY_NUMPAD_ENTER = 'NumpadEnter';
     const KEY_ESCAPE = 'Escape';
     const KEY_F2 = 'F2';
     const KEYS_ROTATE = [KEY_UP, KEY_W];
     const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
     const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
     const KEYS_LEFT = [KEY_LEFT, KEY_A];
+    const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
     const gamePiecesArray = Object.values(gamePieces_1.default);
     const minDir = Math.min(...directions_4.directionsArray);
     const maxDir = Math.max(...directions_4.directionsArray);
@@ -655,7 +667,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.startTime = null;
             this.pauseTime = null;
             this.overTime = null;
-            this.boundKeyDownListener = this.keyDownListener.bind(this);
+            this.boundKeyListener = this.keyListener.bind(this);
             this.boundLoop = this.loop.bind(this);
             this.requestAnimationFrameHandle = null;
             this.canvas = canvas;
@@ -709,15 +721,16 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             // this.drawPieceOnBoard(p3, 3, 5);
             // this.drawPieceOnBoard(p4, 5, 7);
             // this.loop();
-            window.addEventListener('keypress', this.boundKeyDownListener);
+            window.addEventListener('keydown', this.boundKeyListener);
         }
         log(...msg) {
             if (this.opts.debug === true) {
                 console.log('[Gregtris]', ...msg);
             }
         }
-        keyDownListener(e) {
+        keyListener(e) {
             const keyCode = e.code || e.key;
+            this.log('KeyEvent', keyCode);
             let handled = false;
             if (this.gameState === constants_1.GAME_STATE_STARTED) {
                 if (KEYS_LEFT.includes(keyCode)) {
@@ -737,7 +750,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     this.dropCurrentPiece();
                 }
             }
-            if (keyCode === KEY_ENTER) {
+            if (KEYS_ENTER.includes(keyCode)) {
                 if (this.gameState === constants_1.GAME_STATE_BEFORE_START || this.gameState === constants_1.GAME_STATE_PAUSED) {
                     handled = true;
                     this.startGame();
@@ -1046,20 +1059,19 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             // TODO game mechanics
         }
         loopPaused(time) {
-            this.drawGrid();
             this.drawOutlilnes();
             this.setText();
             this.drawModal();
-            this.writeWord('PAUSED', 7, 11, '#777');
+            this.writeWord('PAUSED', 7, 11, '#f20');
         }
         loopGameOver(time) {
         }
         init() {
             this.loadingTime = Date.now();
+            this.triggerLoop();
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
                     this.begin();
-                    this.triggerLoop();
                     resolve(void 0);
                 }, 1000);
                 // const img = new Image();
