@@ -16,7 +16,7 @@
          ],
         "outDir": "dist",
         "module": "amd",
-        "outFile": "dist/tetris.js"
+        "outFile": "dist/gregtris.js"
     },
     "include": [
         "src/**/*"

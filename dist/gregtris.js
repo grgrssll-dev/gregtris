@@ -556,7 +556,7 @@ define("utils", ["require", "exports"], function (require, exports) {
     }
     exports.rand = rand;
 });
-define("tetris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1) {
+define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const KEY_LEFT = 'ArrowLeft';
@@ -576,7 +576,7 @@ define("tetris", ["require", "exports", "utils", "alphabet", "currentPiece", "ga
     const gamePiecesArray = Object.values(gamePieces_1.default);
     const minDir = Math.min(...directions_4.directionsArray);
     const maxDir = Math.max(...directions_4.directionsArray);
-    class Tetris {
+    class Gregtris {
         constructor(canvas, opts) {
             this.opts = {
                 dim: 0,
@@ -887,6 +887,12 @@ define("tetris", ["require", "exports", "utils", "alphabet", "currentPiece", "ga
         addPieceToBucket(piece, x, y) {
             // TODO
         }
+        clearBucketRectangle() {
+            // TODO
+        }
+        drawBucket() {
+            // TODO
+        }
         detectCollision(piece, x, y) {
             // TODO
         }
@@ -898,7 +904,7 @@ define("tetris", ["require", "exports", "utils", "alphabet", "currentPiece", "ga
         }
         log(...msg) {
             if (this.opts.debug === true) {
-                console.log('[Tetris]', ...msg);
+                console.log('[Gregtris]', ...msg);
             }
         }
         init() {
@@ -923,6 +929,6 @@ define("tetris", ["require", "exports", "utils", "alphabet", "currentPiece", "ga
             this.gameState = constants_1.GAME_STATE_OVER;
         }
     }
-    exports.default = Tetris;
+    exports.default = Gregtris;
 });
-//# sourceMappingURL=tetris.js.map
+//# sourceMappingURL=gregtris.js.map

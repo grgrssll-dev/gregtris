@@ -63,7 +63,7 @@ const minDir = Math.min(...directionsArray);
 const maxDir = Math.max(...directionsArray);
 
 
-export default class Tetris {
+export default class Gregtris {
     opts = {
         dim: 0,
         debug: false,
@@ -469,7 +469,7 @@ export default class Tetris {
 
     log(...msg :any[]): void {
         if (this.opts.debug === true) {
-            console.log('[Tetris]', ...msg);
+            console.log('[Gregtris]', ...msg);
         }
     }
 

@@ -1,8 +1,8 @@
 {
-  "name": "tetris",
+  "name": "gregtris",
   "version": "1.0.0",
   "description": "",
-  "main": "src/tetris.ts",
+  "main": "src/gregtris.ts",
   "scripts": {
     "build": "tsc --project ./tsconfig.json",
     "clean": "rm dist/*"
