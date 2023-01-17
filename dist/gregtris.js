@@ -655,7 +655,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.startTime = null;
             this.pauseTime = null;
             this.overTime = null;
-            this.boundKeyPressListener = this.keyPressListener.bind(this);
+            this.boundKeyDownListener = this.keyDownListener.bind(this);
             this.boundLoop = this.loop.bind(this);
             this.requestAnimationFrameHandle = null;
             this.canvas = canvas;
@@ -709,14 +709,14 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             // this.drawPieceOnBoard(p3, 3, 5);
             // this.drawPieceOnBoard(p4, 5, 7);
             // this.loop();
-            window.addEventListener('keypress', this.boundKeyPressListener);
+            window.addEventListener('keypress', this.boundKeyDownListener);
         }
         log(...msg) {
             if (this.opts.debug === true) {
                 console.log('[Gregtris]', ...msg);
             }
         }
-        keyPressListener(e) {
+        keyDownListener(e) {
             const keyCode = e.code || e.key;
             let handled = false;
             if (this.gameState === constants_1.GAME_STATE_STARTED) {
@@ -1002,7 +1002,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.setScore(this.currentScore + scoreInc);
         }
         loop(time) {
-            this.log('loop', this.gameState, (time - (this.previousTime || time)));
+            // this.log('loop', this.gameState, (time - (this.previousTime || time)));
             switch (this.gameState) {
                 case constants_1.GAME_STATE_BEFORE_START:
                     this.loopBeforeStart(time);
@@ -1021,6 +1021,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     break;
             }
             this.previousTime = time;
+            this.triggerLoop();
         }
         loopBeforeStart(time) {
             this.clearGameBoard();

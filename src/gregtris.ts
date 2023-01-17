@@ -105,7 +105,7 @@ export default class Gregtris {
     private pauseTime: number|null = null;
     private overTime: number|null = null;
 
-    private boundKeyPressListener = this.keyPressListener.bind(this);
+    private boundKeyDownListener = this.keyDownListener.bind(this);
     private boundLoop = this.loop.bind(this);
 
     private requestAnimationFrameHandle: number|null = null;
@@ -166,7 +166,7 @@ export default class Gregtris {
 
         // this.loop();
 
-        window.addEventListener('keypress', this.boundKeyPressListener);
+        window.addEventListener('keypress', this.boundKeyDownListener);
     }
 
     private log(...msg :any[]): void {
@@ -175,7 +175,7 @@ export default class Gregtris {
         }
     }
 
-    private keyPressListener(e: KeyboardEvent) {
+    private keyDownListener(e: KeyboardEvent) {
         const keyCode = e.code || e.key;
         let handled = false;
         if (this.gameState === GAME_STATE_STARTED) {
@@ -549,7 +549,7 @@ export default class Gregtris {
     }
 
     private loop(time: number) {
-        this.log('loop', this.gameState, (time - (this.previousTime || time)));
+        // this.log('loop', this.gameState, (time - (this.previousTime || time)));
         switch(this.gameState) {
             case GAME_STATE_BEFORE_START:
                 this.loopBeforeStart(time);
@@ -568,7 +568,7 @@ export default class Gregtris {
                 break;
         }
         this.previousTime = time;
-
+        this.triggerLoop();
     }
 
     private loopBeforeStart(time: number) {
