@@ -1008,19 +1008,15 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     this.loopBeforeStart(time);
                     break;
                 case constants_1.GAME_STATE_LOADING:
-                    this.loadingTime = Date.now();
                     this.loopLoading(time);
                     break;
                 case constants_1.GAME_STATE_STARTED:
-                    this.startTime = Date.now();
                     this.loopStarted(time);
                     break;
                 case constants_1.GAME_STATE_PAUSED:
-                    this.pauseTime = Date.now();
                     this.loopPaused(time);
                     break;
                 case constants_1.GAME_STATE_OVER:
-                    this.overTime = Date.now();
                     this.loopGameOver(time);
                     break;
             }
@@ -1058,10 +1054,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         loopGameOver(time) {
         }
         init() {
-            this.begin();
+            this.loadingTime = Date.now();
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
-                    this.setGameState(constants_1.GAME_STATE_BEFORE_START);
+                    this.begin();
+                    this.triggerLoop();
                     resolve(void 0);
                 }, 1000);
                 // const img = new Image();
@@ -1075,9 +1072,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
         }
         begin() {
+            this.setGameState(constants_1.GAME_STATE_BEFORE_START);
             this.beginTime = Date.now();
-            this.setGameState(constants_1.GAME_STATE_LOADING);
-            this.triggerLoop();
         }
         resetGame() {
             this.begin();
@@ -1094,16 +1090,17 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 this.startTime = Date.now();
             }
             if (this.gameState === constants_1.GAME_STATE_PAUSED && this.pauseTime) {
-                const diff = Date.now() - this.pauseTime;
-                this.startTime += diff;
+                this.startTime = this.startTime + (Date.now() - this.pauseTime);
                 this.pauseTime = null;
             }
             this.setGameState(constants_1.GAME_STATE_STARTED);
         }
         pauseGame() {
+            this.pauseTime = Date.now();
             this.setGameState(constants_1.GAME_STATE_PAUSED);
         }
         endGame() {
+            this.overTime = Date.now();
             this.setGameState(constants_1.GAME_STATE_OVER);
             if (this.currentScore > this.highScore) {
                 this.setHighScore(this.currentScore);
