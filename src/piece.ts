@@ -1,6 +1,6 @@
 import { Matrix } from './interfaces';
 import { Direction, DIR_UP } from './directions';
-import rotator, { rotate0 } from './rotator';
+import rotator from './rotator';
 
 export default class Piece {
     private name: string;

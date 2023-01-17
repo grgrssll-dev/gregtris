@@ -1,7 +1,8 @@
 import { rand } from './utils';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import Piece from './piece';
-import { Container, CoordType } from './interfaces';
+import CurrentPiece from './currentPiece';
+import { Container, CoordType, GameStates } from './interfaces';
 import gamePieces from './gamePieces';
 import { 
     Direction,
@@ -23,28 +24,34 @@ import {
     FACET_DIVISOR,
     ALPHA_DIVISOR,
     DIMENSION_RATIO,
+    GAME_STATE_BEFORE_START,
+    GAME_STATE_STARTED,
+    GAME_STATE_PAUSED,
+    GAME_STATE_OVER,
+    ANIMATION_STATE_DROPPING,
+    ANIMATION_STATE_CLEARING,
+    ANIMATION_STATE_WAITING,
 } from './constants';
 
-const KEY_SPACE = 32;
+const KEY_LEFT = 'ArrowLeft';
+const KEY_A = 'a';
 
-const KEY_LEFT = 37;
-const KEY_A = 65;
+const KEY_UP = 'ArrowUp';
+const KEY_W = 'w';
 
-const KEY_UP = 38;
-const KEY_W = 87;
+const KEY_RIGHT = 'ArrowRight';
+const KEY_D = 'd';
+const KEY_SPACE = 'Space'
 
-const KEY_RIGHT = 39;
-const KEY_D = 68;
+const KEY_DOWN = 'ArrowDown';
+const KEY_S = 's';
 
-const KEY_DOWN = 40;
-const KEY_S = 83;
+const KEY_ENTER = 'Enter';
 
-const KEYS_UP = [KEY_UP, KEY_W];
+const KEYS_ROTATE = [KEY_UP, KEY_W];
 const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
-const KEYS_DOWN = [KEY_DOWN, KEY_S];
+const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
 const KEYS_LEFT = [KEY_LEFT, KEY_A];
-
-
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -82,8 +89,10 @@ export default class Tetris {
 
     currentX = 0;
     currentY = 0;
-    currentPiece: Piece;
+    currentPiece: CurrentPiece;
     nextPiece: Piece;
+
+    gameState: GameStates = GAME_STATE_BEFORE_START;
 
     keyListenerBound = this.keyPressListener.bind(this);
 
@@ -145,7 +154,7 @@ export default class Tetris {
     }
 
     keyPressListener(e: KeyboardEvent) {
-        const keyCode = e.keyCode;
+        const keyCode = e.code || e.key;
         let handled = false;
         if (KEYS_LEFT.includes(keyCode)) {
             handled = true;
@@ -155,13 +164,27 @@ export default class Tetris {
             handled = true;
             this.moveCurrentPiece(DIR_RIGHT);
         }
-        if (KEYS_UP.includes(keyCode)) {
+        if (KEYS_ROTATE.includes(keyCode)) {
             handled = true;
             this.rotateCurrentPiece();
         }
-        if (KEYS_DOWN.includes(keyCode)) {
+        if (KEYS_DROP.includes(keyCode)) {
             handled = true;
             this.dropCurrentPiece();
+        }
+        if (keyCode === KEY_ENTER) {
+            switch(this.gameState) {
+                case GAME_STATE_BEFORE_START:
+                    handled = true;
+                    this.startGame();
+                    break;
+                case GAME_STATE_OVER:
+                    handled = true;
+                    this.resetGame();
+                    break;
+                default:
+                    break;
+            }
         }
         if (handled) {
             e.preventDefault();
@@ -169,11 +192,27 @@ export default class Tetris {
     }
 
     moveCurrentPiece(dir: MovementDirection) {
-        
+        const curr = this.currentPiece;
+        let newX = curr.getX();
+        switch(dir) {
+            case DIR_LEFT: {
+                const {safeX } = this.fitPiece(curr, curr.getX() - 1, curr.getY());
+                newX = safeX;
+                break;
+            }
+            case DIR_RIGHT:{
+                const {safeX } = this.fitPiece(curr, curr.getX() + 1, curr.getY());
+                newX = safeX;
+                break;
+            }
+            default:
+                break;
+        }
+        this.currentPiece.setX(newX);
     }
 
     rotateCurrentPiece() {
-        
+        this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
     }
 
     dropCurrentPiece() {
@@ -205,7 +244,9 @@ export default class Tetris {
     }
 
     setNextPiece() {
-        this.currentPiece = this.nextPiece;
+        const x = Math.floor((COLS - this.nextPiece.getCols()) / 2);
+        const y = 0;
+        this.currentPiece = CurrentPiece.fromPiece(this.nextPiece, x, y);
         this.nextPiece = this.getNextPiece();
         this.placePiece(this.nextPiece, this.conts.next.x + MARGIN, this.conts.next.y + (MARGIN * 2));
     }
@@ -396,17 +437,21 @@ export default class Tetris {
         });
     }
 
+    resetGame() {
+
+    }
+
 
     startGame() {
-
+        this.gameState = GAME_STATE_STARTED;
     }
 
     pauseGame() {
-
+        this.gameState = GAME_STATE_PAUSED;
     }
 
     endGame() {
-        
+        this.gameState = GAME_STATE_OVER;
     }
 
 }

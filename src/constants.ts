@@ -9,6 +9,17 @@ export const FACET_DIVISOR = 8;
 export const ALPHA_DIVISOR = 8;
 export const DIMENSION_RATIO = GAME_COLS / GAME_ROWS;
 
+
+export const GAME_STATE_BEFORE_START = 'BEFORE_START';
+export const GAME_STATE_STARTED = 'STARTED';
+export const GAME_STATE_PAUSED = 'PAUSED';
+export const GAME_STATE_OVER = 'OVER';
+
+
+export const ANIMATION_STATE_DROPPING = 'DROPPING';
+export const ANIMATION_STATE_CLEARING = 'CLEARING';
+export const ANIMATION_STATE_WAITING = 'WAITING';
+
 const Constants = {
     ROWS,
     COLS,
@@ -20,6 +31,13 @@ const Constants = {
     FACET_DIVISOR,
     ALPHA_DIVISOR,
     DIMENSION_RATIO,
+    GAME_STATE_BEFORE_START,
+    GAME_STATE_STARTED,
+    GAME_STATE_PAUSED,
+    GAME_STATE_OVER,
+    ANIMATION_STATE_DROPPING,
+    ANIMATION_STATE_CLEARING,
+    ANIMATION_STATE_WAITING,
 };
 
 export default Constants;
