@@ -40,7 +40,8 @@ export default class Piece {
         this.matrix = newMatrix;
         return this;
     }
-    clone(): Piece {
-        return new Piece(this.name, this.color, rotate0(this.matrix));
+    clone(rotation: Direction = DIR_UP): Piece {
+        const newPiece = new Piece(this.name, this.color, this.matrix);
+        return newPiece.rotate(rotation);
     }
 }

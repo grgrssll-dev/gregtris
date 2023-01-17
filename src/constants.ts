@@ -2,6 +2,7 @@ export const ROWS = 20;
 export const COLS = 10;
 export const GAME_ROWS = 24;
 export const GAME_COLS = 20;
+export const MARGIN = 1;
 export const MX = 2;
 export const GAME_SIZE_DIVISOR = 8;
 export const FACET_DIVISOR = 8;
@@ -13,6 +14,7 @@ const Constants = {
     COLS,
     GAME_ROWS,
     GAME_COLS,
+    MARGIN,
     MX,
     GAME_SIZE_DIVISOR,
     FACET_DIVISOR,

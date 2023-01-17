@@ -1,5 +1,5 @@
 import { rand } from './utils';
-import { Direction } from './directions';
+import { Direction, directionsArray } from './directions';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import { DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT } from './directions';
 import {
@@ -7,6 +7,7 @@ import {
     COLS,
     GAME_ROWS,
     GAME_COLS,
+    MARGIN,
     MX,
     GAME_SIZE_DIVISOR,
     FACET_DIVISOR,
@@ -14,18 +15,21 @@ import {
     DIMENSION_RATIO,
 } from './constants';
 import Piece from './piece';
-import { Container } from './interfaces';
+import { Container, CoordType } from './interfaces';
 import gamePieces from './gamePieces';
 
 
-const gamePiecesCount = Object.keys(gamePieces).length;
+const gamePiecesArray = Object.values(gamePieces);
+const minDir = Math.min(...directionsArray);
+const maxDir = Math.min(...directionsArray);
+
 
 export default class Tetris {
     opts = {
+        dim: 0,
         debug: false,
     };
 
-    dim = 0;
     gridSize = 0;
     width = 0;
     height = 0;
@@ -36,11 +40,12 @@ export default class Tetris {
     bucket: number[][] = [];
 
     conts: Record<string, Container> = {
-        board: { x: 0, y: 0, width: 0, height: 0 },
-        title: { x: 0, y: 0, width: 0, height: 0 },
-        info: { x: 0, y: 0, width: 0, height: 0 },
-        next: { x: 0, y: 0, width: 0, height: 0 },
-        score: { x: 0, y: 0, width: 0, height: 0 },
+        game: { x: 0, y: 0, width: GAME_COLS, height: GAME_ROWS },
+        board: { x: 1, y: 3, width: COLS, height: ROWS },
+        title: { x: 1, y: 1, width: GAME_COLS - (MARGIN * 2), height: 1 },
+        info: { x: COLS + (MARGIN * 2), y: 3, width: GAME_COLS - COLS - (MARGIN * 3), height: 0 },
+        score: { x: COLS + (MARGIN * 2), y: 3, width: 7, height: 12 },
+        next: { x: COLS + (MARGIN * 2), y: 16, width: 7, height: 7 },
     };
 
     level = 1;
@@ -56,22 +61,22 @@ export default class Tetris {
     constructor(canvas: HTMLCanvasElement, opts: Record<any, any>) {
         this.canvas = canvas;
         this.opts = Object.assign(this.opts, {
+            dim: opts.dim,
             debug: opts.debug || this.opts.debug,
         });
-        this.dim = opts.dim;
-        if (!this.dim || Number.isNaN(this.dim)) {
+        if (!this.opts.dim || Number.isNaN(this.opts.dim)) {
             throw new Error('Invalid dimension');
         }
         if (!this.canvas || !(this.canvas instanceof HTMLCanvasElement)) {
             throw new Error('Invalid canvas');
         }
-        this.log('options', this.dim);
+        this.log('options', this.opts);
         const ctx = this.canvas.getContext('2d');
         if (!ctx) {
             throw new Error('Missing Rendering Context');
         }
         this.ctx = ctx;
-        this.gridSize = Math.floor(this.dim / GAME_ROWS) * MX;
+        this.gridSize = Math.floor(this.opts.dim / GAME_ROWS) * MX;
         if (this.gridSize % GAME_SIZE_DIVISOR !== 0) {
             this.gridSize = Math.floor(this.gridSize / GAME_SIZE_DIVISOR) * GAME_SIZE_DIVISOR; 
         }
@@ -90,23 +95,30 @@ export default class Tetris {
             }
             this.bucket.push(row);
         }
-        this.calculatePositions();
         this.drawOutlilnes();
         this.drawGrid();
 
-        this.nextPiece = gamePieces[rand(0, gamePiecesCount - 1)].clone().rotate(rand(0, 3) as Direction);
+        this.nextPiece = this.getNextPiece();
 
-        const p1 = gamePieces[0].clone().rotate(DIR_UP);
-        const p2 = gamePieces[2].clone().rotate(DIR_RIGHT);
-        const p3 = gamePieces[4].clone().rotate(DIR_LEFT);
-        const p4 = gamePieces[6].clone().rotate(DIR_DOWN);
-        this.drawPiece(p1, 1, 1);
-        this.drawPiece(p2, 6, 2);
-        this.drawPiece(p3, 3, 5);
-        this.drawPiece(p4, 5, 7);
+        const p1 = gamePieces[0].clone(DIR_UP);
+        const p2 = gamePieces[2].clone(DIR_RIGHT);
+        const p3 = gamePieces[4].clone(DIR_LEFT);
+        const p4 = gamePieces[6].clone(DIR_DOWN);
+        this.drawPieceOnBoard(p1, 1, 1);
+        this.drawPieceOnBoard(p2, 6, 2);
+        this.drawPieceOnBoard(p3, 3, 5);
+        this.drawPieceOnBoard(p4, 5, 7);
         
         this.setText();
         this.setNextPiece();
+    }
+
+    randDirection(): Direction {
+        return rand(minDir, maxDir) as Direction;
+    }
+
+    randItem<T>(arr: Array<T>): T {
+        return arr[rand(0, arr.length - 1)] as T;
     }
 
     setText() {
@@ -121,37 +133,22 @@ export default class Tetris {
         this.writeWord('NEXT', 12, 16);
     }
 
+    getNextPiece() {
+        return this.randItem<Piece>(gamePiecesArray).clone(this.randDirection());
+    }
+
     setNextPiece() {
         this.currentPiece = this.nextPiece;
-        this.nextPiece = gamePieces[rand(0, gamePiecesCount - 1)].clone().rotate(rand(0, 3) as Direction);
-        this.placePiece(this.nextPiece, this.unit(13), this.unit(18));
+        this.nextPiece = this.getNextPiece();
+        this.placePiece(this.nextPiece, this.conts.next.x + MARGIN, this.conts.next.y + (MARGIN * 2));
     }
 
-    unit(count) {
-        return this.gridSize * count;
+    gridToPx(gridCoord: number) :number {
+        return this.gridSize * gridCoord;
     }
 
-    calculatePositions() {
-        this.conts.board.width = COLS * this.gridSize;
-        this.conts.board.height = ROWS * this.gridSize;
-        this.conts.board.x = this.gridSize;
-        this.conts.board.y = ((GAME_ROWS - ROWS) - 1) * this.unit(1);
-        this.conts.title.width = this.width - this.unit(2);
-        this.conts.title.height = this.unit(1);
-        this.conts.title.x = this.unit(1);
-        this.conts.title.y = this.unit(1);
-        this.conts.info.width = this.width - (this.conts.board.x + this.conts.board.width + this.unit(2));
-        this.conts.info.height = this.conts.board.height;
-        this.conts.info.x = this.conts.board.x + this.conts.board.width + this.unit(1);
-        this.conts.info.y = this.conts.board.y;
-        this.conts.next.width = this.conts.info.width;
-        this.conts.next.height = this.conts.next.width;
-        this.conts.next.x = this.conts.info.x;
-        this.conts.next.y = this.conts.info.y + this.conts.info.height - this.conts.next.height;
-        this.conts.score.width = this.conts.info.width;
-        this.conts.score.height = this.conts.info.height - this.conts.next.height - this.unit(1);
-        this.conts.score.x = this.conts.info.x;
-        this.conts.score.y = this.conts.info.y;
+    boardOffset(coord: CoordType, n: number): number {
+        return n + this.conts.board[coord];
     }
 
     drawGrid() {
@@ -206,7 +203,7 @@ export default class Tetris {
     }
 
     drawFacets(x: number, y: number) {
-        const dim = this.unit(1);
+        const dim = this.gridToPx(1);
         const shadeW = Math.round(dim / FACET_DIVISOR);
         this.ctx.globalCompositeOperation = 'screen';
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
@@ -245,23 +242,23 @@ export default class Tetris {
         return this;
     }
 
-    drawPiece(piece: Piece, x: number, y: number) {
+    drawPieceOnBoard(piece: Piece, x: number, y: number) {
         const { safeX, safeY } = this.fitPiece(piece, x, y);
-        const startX = this.conts.board.x + this.unit(safeX);
-        const startY = this.conts.board.y + this.unit(safeY);
-        this.placePiece(piece, startX, startY);
+        this.placePiece(piece, this.boardOffset('x', safeX), this.boardOffset('y', safeY));
         return this;
     }
 
     placePiece(piece: Piece, x: number, y: number) {
-        const dim = this.unit(1);
+        const dim = this.gridToPx(1);
+        const pxX = this.gridToPx(x);
+        const pxY = this.gridToPx(y);
         piece.getMatrix().forEach((row, rowIndex) => {
             row.forEach((col, colIndex) => {
                 if (col === 1) {
                     this.ctx.fillStyle = piece.getColor();
                     this.ctx.globalCompositeOperation = 'source-over';
-                    const pX = x + this.unit(colIndex);
-                    const pY = y + this.unit(rowIndex);
+                    const pX = pxX + this.gridToPx(colIndex);
+                    const pY = pxY + this.gridToPx(rowIndex);
                     this.ctx.fillRect(pX, pY, dim, dim);
                     this.drawFacets(pX, pY);
                 }
@@ -271,8 +268,8 @@ export default class Tetris {
     }
 
     drawLetter(letter: string, x: number, y: number) {
-        const startX = this.unit(x);
-        const startY = this.unit(y);
+        const startX = this.gridToPx(x);
+        const startY = this.gridToPx(y);
         const dim = this.gridSize / ALPHA_DIVISOR;
         let key = letter.toLowerCase();
         if (key === ' ') {
@@ -297,6 +294,22 @@ export default class Tetris {
             this.drawLetter(letter, x + index, y);
         });
         return this;
+    }
+
+    addPieceToBucket(piece: Piece, x: number, y: number) {
+        // TODO
+    }
+
+    detectCollision(piece: Piece, x: number, y: number) {
+        // TODO
+    }
+
+    detectFullRows() {
+        // TODO
+    }
+
+    clearRow(y: number) {
+        // TODO
     }
 
     log(...msg): void {
@@ -326,7 +339,7 @@ export default class Tetris {
     }
 
     endGame() {
-
+        
     }
 
 }
