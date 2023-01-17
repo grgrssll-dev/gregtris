@@ -447,6 +447,14 @@ export default class Tetris {
         // TODO
     }
 
+    clearBucketRectangle() {
+        // TODO
+    }
+
+    drawBucket() {
+        // TODO
+    }
+
     detectCollision(piece: Piece, x: number, y: number) {
         // TODO
     }
