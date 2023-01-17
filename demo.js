@@ -1,16 +1,15 @@
-requirejs(['tetris'], (tetris) => {
-    const Tetris = tetris.default;
-    console.log('Tetris', tetris.default, Tetris);
+requirejs(['gregtris'], (gregtris) => {
+    const Gregtris = gregtris.default;
     function init() {
         console.log('init');
         const canvas = document.getElementById('board');
         const parent = canvas.parentElement;
         const dim = Math.min(parent.clientWidth, parent.clientHeight);
-        const tetris = new Tetris(canvas,{
+        const gregtris = new Gregtris(canvas,{
             dim,
             debug: true,
         });
-        tetris.init().then(() => {
+        gregtris.init().then(() => {
             console.log('Loaded');
         });
     

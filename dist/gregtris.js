@@ -124,6 +124,16 @@ define("alphabet", ["require", "exports"], function (require, exports) {
             [0, 0, 1, 1, 1, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ],
+        'd': [
+            [1, 1, 1, 1, 1, 0, 0, 0],
+            [1, 1, 0, 0, 1, 1, 0, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 1, 1, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
         'e': [
             [1, 1, 1, 1, 1, 1, 1, 0],
             [1, 1, 0, 0, 0, 0, 0, 0],
@@ -244,6 +254,16 @@ define("alphabet", ["require", "exports"], function (require, exports) {
             [0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ],
+        'w': [
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [1, 1, 0, 1, 0, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 0, 1, 1, 1, 0],
+            [1, 1, 0, 0, 0, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
         'x': [
             [1, 1, 0, 0, 0, 1, 1, 0],
             [1, 1, 1, 0, 1, 1, 1, 0],
@@ -264,6 +284,26 @@ define("alphabet", ["require", "exports"], function (require, exports) {
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ],
+        '.': [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 1, 0, 0, 0, 0, 0],
+            [0, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        '…': [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 0, 1, 1, 0, 1, 1],
+            [1, 1, 0, 1, 1, 0, 1, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ],
         [exports.SPACE_PLACEHOLDER]: [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -280,17 +320,20 @@ define("alphabet", ["require", "exports"], function (require, exports) {
 define("constants", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
+    exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
     exports.ROWS = 20;
     exports.COLS = 10;
     exports.GAME_ROWS = 24;
     exports.GAME_COLS = 20;
     exports.MARGIN = 1;
     exports.MX = 2;
+    exports.PX = 2;
     exports.GAME_SIZE_DIVISOR = 8;
     exports.FACET_DIVISOR = 8;
     exports.ALPHA_DIVISOR = 8;
     exports.DIMENSION_RATIO = exports.GAME_COLS / exports.GAME_ROWS;
+    exports.HIGH_SCORE_KEY = 'HighScore';
+    exports.GAME_STATE_LOADING = 'LOADING';
     exports.GAME_STATE_BEFORE_START = 'BEFORE_START';
     exports.GAME_STATE_STARTED = 'STARTED';
     exports.GAME_STATE_PAUSED = 'PAUSED';
@@ -305,10 +348,12 @@ define("constants", ["require", "exports"], function (require, exports) {
         GAME_COLS: exports.GAME_COLS,
         MARGIN: exports.MARGIN,
         MX: exports.MX,
+        PX: exports.PX,
         GAME_SIZE_DIVISOR: exports.GAME_SIZE_DIVISOR,
         FACET_DIVISOR: exports.FACET_DIVISOR,
         ALPHA_DIVISOR: exports.ALPHA_DIVISOR,
         DIMENSION_RATIO: exports.DIMENSION_RATIO,
+        GAME_STATE_LOADING: exports.GAME_STATE_LOADING,
         GAME_STATE_BEFORE_START: exports.GAME_STATE_BEFORE_START,
         GAME_STATE_STARTED: exports.GAME_STATE_STARTED,
         GAME_STATE_PAUSED: exports.GAME_STATE_PAUSED,
@@ -316,6 +361,7 @@ define("constants", ["require", "exports"], function (require, exports) {
         ANIMATION_STATE_DROPPING: exports.ANIMATION_STATE_DROPPING,
         ANIMATION_STATE_CLEARING: exports.ANIMATION_STATE_CLEARING,
         ANIMATION_STATE_WAITING: exports.ANIMATION_STATE_WAITING,
+        HIGH_SCORE_KEY: exports.HIGH_SCORE_KEY,
     };
     exports.default = Constants;
 });
@@ -569,6 +615,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
     const KEY_DOWN = 'ArrowDown';
     const KEY_S = 's';
     const KEY_ENTER = 'Enter';
+    const KEY_ESCAPE = 'Escape';
+    const KEY_F2 = 'F2';
     const KEYS_ROTATE = [KEY_UP, KEY_W];
     const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
     const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
@@ -593,15 +641,23 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 info: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 3, width: constants_1.GAME_COLS - constants_1.COLS - (constants_1.MARGIN * 3), height: 0 },
                 score: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 3, width: 7, height: 12 },
                 next: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 16, width: 7, height: 7 },
+                modal: { x: 5, y: 6, width: 10, height: 12 },
             };
             this.level = 1;
             this.linesCleared = 0;
-            this.gameScore = 0;
-            this.topScore = 0;
-            this.currentX = 0;
-            this.currentY = 0;
-            this.gameState = constants_1.GAME_STATE_BEFORE_START;
-            this.keyListenerBound = this.keyPressListener.bind(this);
+            this.currentScore = 0;
+            this.highScore = 0;
+            this.isNewHighScore = false;
+            this.gameState = constants_1.GAME_STATE_LOADING;
+            this.previousTime = null;
+            this.beginTime = null;
+            this.loadingTime = null;
+            this.startTime = null;
+            this.pauseTime = null;
+            this.overTime = null;
+            this.boundKeyPressListener = this.keyPressListener.bind(this);
+            this.boundLoop = this.loop.bind(this);
+            this.requestAnimationFrameHandle = null;
             this.canvas = canvas;
             this.opts = Object.assign(this.opts, {
                 dim: opts.dim,
@@ -638,53 +694,66 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 }
                 this.bucket.push(row);
             }
-            this.drawGrid();
-            this.drawOutlilnes();
-            this.setText();
-            this.nextPiece = this.getRandomPiece();
-            this.setNextPiece();
-            const p1 = gamePieces_1.default.FLAT.clone(directions_4.DIR_UP);
-            const p2 = gamePieces_1.default.L_RIGHT.clone(directions_4.DIR_RIGHT);
-            const p3 = gamePieces_1.default.S_LEFT.clone(directions_4.DIR_LEFT);
-            const p4 = gamePieces_1.default.MIDDLE.clone(directions_4.DIR_DOWN);
-            this.drawPieceOnBoard(p1, 1, 1);
-            this.drawPieceOnBoard(p2, 6, 2);
-            this.drawPieceOnBoard(p3, 3, 5);
-            this.drawPieceOnBoard(p4, 5, 7);
-            window.addEventListener('keypress', this.keyListenerBound);
+            const storageHighScore = parseInt(`${localStorage.getItem(constants_1.HIGH_SCORE_KEY) || 0}`, 10);
+            if (!Number.isNaN(storageHighScore)) {
+                this.highScore = storageHighScore;
+            }
+            // this.nextPiece = this.getRandomPiece();
+            // this.setNextPiece();
+            // const p1 = gamePieces.FLAT.clone(DIR_UP);
+            // const p2 = gamePieces.L_RIGHT.clone(DIR_RIGHT);
+            // const p3 = gamePieces.S_LEFT.clone(DIR_LEFT);
+            // const p4 = gamePieces.MIDDLE.clone(DIR_DOWN);
+            // this.drawPieceOnBoard(p1, 1, 1);
+            // this.drawPieceOnBoard(p2, 6, 2);
+            // this.drawPieceOnBoard(p3, 3, 5);
+            // this.drawPieceOnBoard(p4, 5, 7);
+            // this.loop();
+            window.addEventListener('keypress', this.boundKeyPressListener);
+        }
+        log(...msg) {
+            if (this.opts.debug === true) {
+                console.log('[Gregtris]', ...msg);
+            }
         }
         keyPressListener(e) {
             const keyCode = e.code || e.key;
             let handled = false;
-            if (KEYS_LEFT.includes(keyCode)) {
-                handled = true;
-                this.moveCurrentPiece(directions_4.DIR_LEFT);
-            }
-            if (KEYS_RIGHT.includes(keyCode)) {
-                handled = true;
-                this.moveCurrentPiece(directions_4.DIR_RIGHT);
-            }
-            if (KEYS_ROTATE.includes(keyCode)) {
-                handled = true;
-                this.rotateCurrentPiece();
-            }
-            if (KEYS_DROP.includes(keyCode)) {
-                handled = true;
-                this.dropCurrentPiece();
+            if (this.gameState === constants_1.GAME_STATE_STARTED) {
+                if (KEYS_LEFT.includes(keyCode)) {
+                    handled = true;
+                    this.moveCurrentPiece(directions_4.DIR_LEFT);
+                }
+                if (KEYS_RIGHT.includes(keyCode)) {
+                    handled = true;
+                    this.moveCurrentPiece(directions_4.DIR_RIGHT);
+                }
+                if (KEYS_ROTATE.includes(keyCode)) {
+                    handled = true;
+                    this.rotateCurrentPiece();
+                }
+                if (KEYS_DROP.includes(keyCode)) {
+                    handled = true;
+                    this.dropCurrentPiece();
+                }
             }
             if (keyCode === KEY_ENTER) {
-                switch (this.gameState) {
-                    case constants_1.GAME_STATE_BEFORE_START:
-                        handled = true;
-                        this.startGame();
-                        break;
-                    case constants_1.GAME_STATE_OVER:
-                        handled = true;
-                        this.resetGame();
-                        break;
-                    default:
-                        break;
+                if (this.gameState === constants_1.GAME_STATE_BEFORE_START || this.gameState === constants_1.GAME_STATE_PAUSED) {
+                    handled = true;
+                    this.startGame();
                 }
+                else if (this.gameState === constants_1.GAME_STATE_OVER) {
+                    handled = true;
+                    this.resetGame();
+                }
+            }
+            if (keyCode === KEY_ESCAPE) {
+                this.pauseGame();
+                handled = true;
+            }
+            if (keyCode === KEY_F2) {
+                this.resetGame();
+                handled = true;
             }
             if (handled) {
                 e.preventDefault();
@@ -724,9 +793,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             const levelText = `LEVEL ${this.level}`;
             this.writeWord(levelText, Math.floor((constants_1.GAME_COLS - 2 - levelText.length) / 2) + 1, 1);
             this.writeWord('TOP', 12, 3);
-            this.writeWord(`${this.topScore}`, 12, 4);
+            this.writeWord(`${this.highScore}`, 12, 4);
             this.writeWord('SCORE', 12, 7);
-            this.writeWord(`${this.gameScore}`, 12, 8);
+            this.writeWord(`${this.currentScore}`, 12, 8);
             this.writeWord('LINES', 12, 11);
             this.writeWord(`${this.linesCleared}`, 12, 12);
             this.writeWord('NEXT', 12, 16);
@@ -745,7 +814,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.placePiece(this.nextPiece, this.conts.next.x + constants_1.MARGIN, this.conts.next.y + (constants_1.MARGIN * 2));
             return this.currentPiece;
         }
-        gridToPx(gridCoord) {
+        px(gridCoord) {
             return this.gridSize * gridCoord;
         }
         boardOffset(coord, n) {
@@ -778,12 +847,26 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         drawOutlilnes() {
             const { board, title, info, next, score, } = this.conts;
             this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = constants_1.MX;
-            this.ctx.strokeRect(this.gridToPx(board.x), this.gridToPx(board.y), this.gridToPx(board.width), this.gridToPx(board.height));
-            this.ctx.strokeRect(this.gridToPx(title.x), this.gridToPx(title.y), this.gridToPx(title.width), this.gridToPx(title.height));
-            this.ctx.strokeRect(this.gridToPx(info.x), this.gridToPx(info.y), this.gridToPx(info.width), this.gridToPx(info.height));
-            this.ctx.strokeRect(this.gridToPx(next.x), this.gridToPx(next.y), this.gridToPx(next.width), this.gridToPx(next.height));
-            this.ctx.strokeRect(this.gridToPx(score.x), this.gridToPx(score.y), this.gridToPx(score.width), this.gridToPx(score.height));
+            this.ctx.lineWidth = constants_1.PX;
+            this.ctx.strokeRect(this.px(board.x), this.px(board.y), this.px(board.width), this.px(board.height));
+            this.ctx.strokeRect(this.px(title.x), this.px(title.y), this.px(title.width), this.px(title.height));
+            this.ctx.strokeRect(this.px(info.x), this.px(info.y), this.px(info.width), this.px(info.height));
+            this.ctx.strokeRect(this.px(next.x), this.px(next.y), this.px(next.width), this.px(next.height));
+            this.ctx.strokeRect(this.px(score.x), this.px(score.y), this.px(score.width), this.px(score.height));
+        }
+        setHighScore(score) {
+            localStorage.set(constants_1.HIGH_SCORE_KEY, score);
+        }
+        drawModal() {
+            this.drawGrid();
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            this.ctx.fillRect(this.px(this.conts.modal.x), this.px(this.conts.modal.y), this.px(this.conts.modal.width), this.px(this.conts.modal.height));
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = constants_1.PX;
+            this.ctx.strokeRect(this.px(this.conts.modal.x), this.px(this.conts.modal.y), this.px(this.conts.modal.width), this.px(this.conts.modal.height));
+        }
+        clearModal() {
+            this.ctx.clearRect(this.px(this.conts.modal.x) + constants_1.PX, this.px(this.conts.modal.y) + constants_1.PX, this.px(this.conts.modal.width) + (constants_1.PX * 2), this.px(this.conts.modal.height) + (constants_1.PX * 2));
         }
         fitPiece(piece, x, y) {
             let toX = x;
@@ -800,7 +883,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             };
         }
         drawFacets(x, y) {
-            const dim = this.gridToPx(1);
+            const dim = this.px(1);
             const shadeW = Math.round(dim / constants_1.FACET_DIVISOR);
             this.ctx.globalCompositeOperation = 'screen';
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
@@ -840,16 +923,16 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             return this;
         }
         placePiece(piece, x, y) {
-            const dim = this.gridToPx(1);
-            const pxX = this.gridToPx(x);
-            const pxY = this.gridToPx(y);
+            const dim = this.px(1);
+            const pxX = this.px(x);
+            const pxY = this.px(y);
             piece.getMatrix().forEach((row, rowIndex) => {
                 row.forEach((col, colIndex) => {
                     if (col === 1) {
                         this.ctx.fillStyle = piece.getColor();
                         this.ctx.globalCompositeOperation = 'source-over';
-                        const pX = pxX + this.gridToPx(colIndex);
-                        const pY = pxY + this.gridToPx(rowIndex);
+                        const pX = pxX + this.px(colIndex);
+                        const pY = pxY + this.px(rowIndex);
                         this.ctx.fillRect(pX, pY, dim, dim);
                         this.drawFacets(pX, pY);
                     }
@@ -857,16 +940,16 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             });
             return this;
         }
-        drawLetter(letter, x, y) {
-            const startX = this.gridToPx(x);
-            const startY = this.gridToPx(y);
+        drawLetter(letter, x, y, color = '#000') {
+            const startX = this.px(x);
+            const startY = this.px(y);
             const dim = this.gridSize / constants_1.ALPHA_DIVISOR;
             let key = letter.toLowerCase();
             if (key === ' ') {
                 key = alphabet_1.SPACE_PLACEHOLDER;
             }
             const letterForm = alphabet_1.default[key];
-            this.ctx.fillStyle = '#000';
+            this.ctx.fillStyle = color;
             if (letterForm) {
                 letterForm.forEach((row, rowIndex) => {
                     row.forEach((col, colIndex) => {
@@ -878,17 +961,24 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
             return this;
         }
-        writeWord(word, x, y) {
+        writeWord(word, x, y, color = '#000') {
             word.split('').forEach((letter, index) => {
-                this.drawLetter(letter, x + index, y);
+                this.drawLetter(letter, x + index, y, color);
             });
             return this;
+        }
+        setGameState(gameState) {
+            this.log('GameState', gameState);
+            this.gameState = gameState;
+        }
+        clearGameBoard() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
         addPieceToBucket(piece, x, y) {
             // TODO
         }
         clearBucketRectangle() {
-            // TODO
+            this.ctx.clearRect(this.px(this.conts.board.x) + constants_1.PX, this.px(this.conts.board.y) + constants_1.PX, this.px(this.conts.board.width) - (constants_1.PX * 2), this.px(this.conts.board.height) - (constants_1.PX * 2));
         }
         drawBucket() {
             // TODO
@@ -902,31 +992,129 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         clearRow(y) {
             // TODO
         }
-        log(...msg) {
-            if (this.opts.debug === true) {
-                console.log('[Gregtris]', ...msg);
+        setScore(score) {
+            this.currentScore = score;
+            if (this.currentScore > this.highScore) {
+                this.isNewHighScore = true;
             }
         }
+        incrementScore(scoreInc) {
+            this.setScore(this.currentScore + scoreInc);
+        }
+        loop(time) {
+            this.log('loop', this.gameState, (time - (this.previousTime || time)));
+            switch (this.gameState) {
+                case constants_1.GAME_STATE_BEFORE_START:
+                    this.loopBeforeStart(time);
+                    break;
+                case constants_1.GAME_STATE_LOADING:
+                    this.loadingTime = Date.now();
+                    this.loopLoading(time);
+                    break;
+                case constants_1.GAME_STATE_STARTED:
+                    this.startTime = Date.now();
+                    this.loopStarted(time);
+                    break;
+                case constants_1.GAME_STATE_PAUSED:
+                    this.pauseTime = Date.now();
+                    this.loopPaused(time);
+                    break;
+                case constants_1.GAME_STATE_OVER:
+                    this.overTime = Date.now();
+                    this.loopGameOver(time);
+                    break;
+            }
+            this.previousTime = time;
+        }
+        loopBeforeStart(time) {
+            this.clearGameBoard();
+            this.drawModal();
+            this.writeWord('GREGTRIS', 6, 7, '#092');
+            this.writeWord('PRESS', 7, 9, '#06F');
+            this.writeWord('ENTER', 7, 10, '#f60');
+            this.writeWord('TO START', 6, 11, '#f00');
+            this.writeWord('NEW GAME', 6, 12, '#f0f');
+        }
+        loopLoading(time) {
+            this.clearGameBoard();
+            this.drawModal();
+            this.writeWord('GREGTRIS', 6, 7, '#092');
+            this.writeWord('LOADING…', 6, 9, '#f00');
+        }
+        loopStarted(time) {
+            this.clearGameBoard();
+            this.drawGrid();
+            this.drawOutlilnes();
+            this.setText();
+            // TODO game mechanics
+        }
+        loopPaused(time) {
+            this.drawGrid();
+            this.drawOutlilnes();
+            this.setText();
+            this.drawModal();
+            this.writeWord('PAUSED', 7, 11, '#777');
+        }
+        loopGameOver(time) {
+        }
         init() {
-            return Promise.resolve();
-            // return new Promise((resolve, reject) => {
-            //     const img = new Image();
-            //     img.onload = () => {
-            //         resolve();
-            //     };
-            //     img.onerror = reject;
-            // });
+            this.begin();
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    this.setGameState(constants_1.GAME_STATE_BEFORE_START);
+                    resolve(void 0);
+                }, 1000);
+                // const img = new Image();
+                // img.onload = () => {
+                //     resolve();
+                // };
+                // img.onerror = reject;
+            });
+        }
+        triggerLoop() {
+            this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
+        }
+        begin() {
+            this.beginTime = Date.now();
+            this.setGameState(constants_1.GAME_STATE_LOADING);
+            this.triggerLoop();
         }
         resetGame() {
+            this.begin();
+            this.previousTime = null;
+            this.loadingTime = null;
+            this.startTime = null;
+            this.pauseTime = null;
+            this.overTime = null;
+            this.isNewHighScore = false;
+            this.triggerLoop();
         }
         startGame() {
-            this.gameState = constants_1.GAME_STATE_STARTED;
+            if (!this.startTime) {
+                this.startTime = Date.now();
+            }
+            if (this.gameState === constants_1.GAME_STATE_PAUSED && this.pauseTime) {
+                const diff = Date.now() - this.pauseTime;
+                this.startTime += diff;
+                this.pauseTime = null;
+            }
+            this.setGameState(constants_1.GAME_STATE_STARTED);
         }
         pauseGame() {
-            this.gameState = constants_1.GAME_STATE_PAUSED;
+            this.setGameState(constants_1.GAME_STATE_PAUSED);
         }
         endGame() {
-            this.gameState = constants_1.GAME_STATE_OVER;
+            this.setGameState(constants_1.GAME_STATE_OVER);
+            if (this.currentScore > this.highScore) {
+                this.setHighScore(this.currentScore);
+            }
+        }
+        kill() {
+            // TODO, make this cut screen to some page?
+            this.resetGame();
+            if (this.requestAnimationFrameHandle) {
+                cancelAnimationFrame(this.requestAnimationFrameHandle);
+            }
         }
     }
     exports.default = Gregtris;

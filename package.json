@@ -5,6 +5,7 @@
   "main": "src/gregtris.ts",
   "scripts": {
     "build": "tsc --project ./tsconfig.json",
+    "dev": "tsc --project ./tsconfig.json --watch",
     "clean": "rm dist/*"
   },
   "author": "",
