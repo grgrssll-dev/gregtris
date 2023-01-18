@@ -56,17 +56,19 @@ const KEY_ESCAPE = 'Escape';
 const KEY_P = 'KeyP';
 
 const KEY_F2 = 'F2';
+const KEY_R = 'KeyR';
 
 const KEY_Q = 'KeyQ';
+const KEY_K = 'KeyK';
 
 const KEYS_ROTATE = [KEY_UP, KEY_W];
 const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
 const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
 const KEYS_LEFT = [KEY_LEFT, KEY_A];
 const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
-const KEYS_PAUSE = [KEY_ESCAPE];
-const KEYS_RESTART = [KEY_F2, KEY_P];
-const KEYS_KILL = [KEY_Q];
+const KEYS_PAUSE = [KEY_ESCAPE, KEY_P];
+const KEYS_RESTART = [KEY_F2, KEY_R];
+const KEYS_KILL = [KEY_Q, KEY_K];
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -97,6 +99,7 @@ export default class Gregtris {
         modal: { x: 5, y: 6, width: 10, height: 12 },
     };
 
+    private killed = false;
     private level = 1;
     private linesCleared = 0;
     private currentScore = 0;
@@ -141,6 +144,7 @@ export default class Gregtris {
             throw new Error('Invalid canvas');
         }
         this.log('options', this.opts);
+        this.log('KeyBoardShorcuts', { KEYS_ROTATE, KEYS_RIGHT, KEYS_DROP, KEYS_LEFT, KEYS_ENTER, KEYS_PAUSE, KEYS_RESTART, KEYS_KILL });
         const ctx = this.canvas.getContext('2d');
         if (!ctx) {
             throw new Error('Missing Rendering Context');
@@ -194,49 +198,60 @@ export default class Gregtris {
     }
 
     private keyListener(e: KeyboardEvent) {
-        const keyCode = e.code || e.key;
-        this.log('KeyEvent', keyCode);
+        const {
+            code,
+            key,
+            metaKey,
+            shiftKey,
+            altKey,
+            ctrlKey,
+        } = e;
+        const keyCode = code || key;
+        const modifierKey = metaKey || shiftKey || altKey || ctrlKey;
         let handled = false;
-        if (this.isStarted()) {
-            if (KEYS_LEFT.includes(keyCode)) {
-                handled = true;
-                this.moveCurrentPiece(DIR_LEFT);
+        if (!modifierKey) {
+            if (this.isStarted()) {
+                if (KEYS_LEFT.includes(keyCode)) {
+                    handled = true;
+                    this.moveCurrentPiece(DIR_LEFT);
+                }
+                if (KEYS_RIGHT.includes(keyCode)) {
+                    handled = true;
+                    this.moveCurrentPiece(DIR_RIGHT);
+                }
+                if (KEYS_ROTATE.includes(keyCode)) {
+                    handled = true;
+                    this.rotateCurrentPiece();
+                }
+                if (KEYS_DROP.includes(keyCode)) {
+                    handled = true;
+                    this.dropCurrentPiece();
+                }
+                if (KEYS_PAUSE.includes(keyCode)) {
+                    handled = true;
+                    this.pauseGame();
+                }
             }
-            if (KEYS_RIGHT.includes(keyCode)) {
-                handled = true;
-                this.moveCurrentPiece(DIR_RIGHT);
+            if (KEYS_ENTER.includes(keyCode)) {
+                if (this.isDoneLoading() || this.isPaused()) {
+                    handled = true;
+                    this.startGame();
+                } else if (this.isGameOver()) {
+                    handled = true;
+                    this.resetGame();
+                }
             }
-            if (KEYS_ROTATE.includes(keyCode)) {
-                handled = true;
-                this.rotateCurrentPiece();
-            }
-            if (KEYS_DROP.includes(keyCode)) {
-                handled = true;
-                this.dropCurrentPiece();
-            }
-            if (KEYS_PAUSE.includes(keyCode)) {
-                this.pauseGame();
-                handled = true;
-            }
-        }
-        if (KEYS_ENTER.includes(keyCode)) {
-            if (this.isDoneLoading() || this.isPaused()) {
-                handled = true;
-                this.startGame();
-            } else if (this.isGameOver()) {
+            if (KEYS_RESTART.includes(keyCode)) {
                 handled = true;
                 this.resetGame();
             }
-        }
-        if (KEYS_RESTART.includes(keyCode)) {
-            this.resetGame();
-            handled = true;
-        }
-        if (KEYS_KILL.includes(KEY_Q)) {
-            this.kill();
-            handled = true;
+            if (KEYS_KILL.includes(keyCode)) {
+                handled = true;
+                this.kill();
+            }
         }
         if (handled) {
+            this.log('KeyEvent', keyCode);
             e.preventDefault();
         }
     }
@@ -386,7 +401,6 @@ export default class Gregtris {
     }
 
     private drawModal() {
-        this.drawGrid();
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
         this.ctx.fillRect(
             this.px(this.conts.modal.x), 
@@ -561,6 +575,7 @@ export default class Gregtris {
     }
 
     private setScore(score: number) {
+        this.log('SetScore', score);
         this.currentScore = score;
         if (this.currentScore > this.highScore) {
             this.isNewHighScore = true;
@@ -572,7 +587,7 @@ export default class Gregtris {
     }
 
     private loop(time: number) {
-        // this.log('loop', this.gameState, (time - (this.previousTime || time)));
+        this.log('loop', this.gameState, (time - (this.previousTime || time)));
         const handler = this.loopHandlers[this.gameState];
         if (handler) {
             handler(time);
@@ -583,6 +598,7 @@ export default class Gregtris {
 
     private loopBeforeStart(time: number) {
         this.clearGameBoard();
+        this.drawGrid();
         this.drawModal();
         this.writeWord('GREGTRIS', 6, 7, '#092');
         this.writeWord('PRESS', 7, 9, '#06F');
@@ -593,6 +609,7 @@ export default class Gregtris {
 
     private loopLoading(time: number) {
         this.clearGameBoard();
+        this.drawGrid();
         this.drawModal();
         this.writeWord('GREGTRIS', 6, 7, '#092');
         this.writeWord('LOADING…', 6, 9, '#f00');
@@ -607,8 +624,6 @@ export default class Gregtris {
     }
 
     private loopPaused(time: number) {
-        this.drawOutlilnes();
-        this.setText();
         this.drawModal();
         this.writeWord('PAUSED', 7, 11, '#f20');
     }
@@ -654,16 +669,21 @@ export default class Gregtris {
     }
 
     private triggerLoop() {
-        this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
+        if (!this.killed) {
+            this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
+        }
     }
 
     private begin() {
+        this.killed = false;
         this.setGameState(GAME_STATE_BEFORE_START);
         this.beginTime = Date.now();
     }
 
     resetGame() {
+        this.log('ResetGame');
         this.begin();
+        this.killed = false;
         this.previousTime = null;
         this.loadingTime = null;
         this.startTime = null;
@@ -674,6 +694,7 @@ export default class Gregtris {
     }
 
     startGame() {
+        this.log('StartGame');
         if (!this.startTime) {
             this.startTime = Date.now();
         }
@@ -685,11 +706,13 @@ export default class Gregtris {
     }
 
     pauseGame() {
+        this.log('PauseGame');
         this.pauseTime = Date.now();
         this.setGameState(GAME_STATE_PAUSED);
     }
 
     endGame() {
+        this.log('EndGame');
         this.overTime = Date.now();
         this.setGameState(GAME_STATE_GAME_OVER);
         if (this.currentScore > this.highScore) {
@@ -698,11 +721,17 @@ export default class Gregtris {
     }
 
     kill() {
-        // TODO, make this cut screen to some page?
-        this.resetGame();
+        this.setGameState(GAME_STATE_GAME_OVER);
+        this.killed = true;
         if (this.requestAnimationFrameHandle) {
             cancelAnimationFrame(this.requestAnimationFrameHandle);
         }
+        this.previousTime = null;
+        this.loadingTime = null;
+        this.startTime = null;
+        this.pauseTime = null;
+        this.overTime = null;
+        this.isNewHighScore = false;
     }
 
 }

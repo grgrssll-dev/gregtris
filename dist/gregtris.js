@@ -629,15 +629,17 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
     const KEY_ESCAPE = 'Escape';
     const KEY_P = 'KeyP';
     const KEY_F2 = 'F2';
+    const KEY_R = 'KeyR';
     const KEY_Q = 'KeyQ';
+    const KEY_K = 'KeyK';
     const KEYS_ROTATE = [KEY_UP, KEY_W];
     const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
     const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
     const KEYS_LEFT = [KEY_LEFT, KEY_A];
     const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
-    const KEYS_PAUSE = [KEY_ESCAPE];
-    const KEYS_RESTART = [KEY_F2, KEY_P];
-    const KEYS_KILL = [KEY_Q];
+    const KEYS_PAUSE = [KEY_ESCAPE, KEY_P];
+    const KEYS_RESTART = [KEY_F2, KEY_R];
+    const KEYS_KILL = [KEY_Q, KEY_K];
     const gamePiecesArray = Object.values(gamePieces_1.default);
     const minDir = Math.min(...directions_4.directionsArray);
     const maxDir = Math.max(...directions_4.directionsArray);
@@ -660,6 +662,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 next: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 16, width: 7, height: 7 },
                 modal: { x: 5, y: 6, width: 10, height: 12 },
             };
+            this.killed = false;
             this.level = 1;
             this.linesCleared = 0;
             this.currentScore = 0;
@@ -694,6 +697,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 throw new Error('Invalid canvas');
             }
             this.log('options', this.opts);
+            this.log('KeyBoardShorcuts', { KEYS_ROTATE, KEYS_RIGHT, KEYS_DROP, KEYS_LEFT, KEYS_ENTER, KEYS_PAUSE, KEYS_RESTART, KEYS_KILL });
             const ctx = this.canvas.getContext('2d');
             if (!ctx) {
                 throw new Error('Missing Rendering Context');
@@ -741,50 +745,54 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         keyListener(e) {
-            const keyCode = e.code || e.key;
-            this.log('KeyEvent', keyCode);
+            const { code, key, metaKey, shiftKey, altKey, ctrlKey, } = e;
+            const keyCode = code || key;
+            const modifierKey = metaKey || shiftKey || altKey || ctrlKey;
             let handled = false;
-            if (this.isStarted()) {
-                if (KEYS_LEFT.includes(keyCode)) {
-                    handled = true;
-                    this.moveCurrentPiece(directions_4.DIR_LEFT);
+            if (!modifierKey) {
+                if (this.isStarted()) {
+                    if (KEYS_LEFT.includes(keyCode)) {
+                        handled = true;
+                        this.moveCurrentPiece(directions_4.DIR_LEFT);
+                    }
+                    if (KEYS_RIGHT.includes(keyCode)) {
+                        handled = true;
+                        this.moveCurrentPiece(directions_4.DIR_RIGHT);
+                    }
+                    if (KEYS_ROTATE.includes(keyCode)) {
+                        handled = true;
+                        this.rotateCurrentPiece();
+                    }
+                    if (KEYS_DROP.includes(keyCode)) {
+                        handled = true;
+                        this.dropCurrentPiece();
+                    }
+                    if (KEYS_PAUSE.includes(keyCode)) {
+                        handled = true;
+                        this.pauseGame();
+                    }
                 }
-                if (KEYS_RIGHT.includes(keyCode)) {
-                    handled = true;
-                    this.moveCurrentPiece(directions_4.DIR_RIGHT);
+                if (KEYS_ENTER.includes(keyCode)) {
+                    if (this.isDoneLoading() || this.isPaused()) {
+                        handled = true;
+                        this.startGame();
+                    }
+                    else if (this.isGameOver()) {
+                        handled = true;
+                        this.resetGame();
+                    }
                 }
-                if (KEYS_ROTATE.includes(keyCode)) {
-                    handled = true;
-                    this.rotateCurrentPiece();
-                }
-                if (KEYS_DROP.includes(keyCode)) {
-                    handled = true;
-                    this.dropCurrentPiece();
-                }
-                if (KEYS_PAUSE.includes(keyCode)) {
-                    this.pauseGame();
-                    handled = true;
-                }
-            }
-            if (KEYS_ENTER.includes(keyCode)) {
-                if (this.isDoneLoading() || this.isPaused()) {
-                    handled = true;
-                    this.startGame();
-                }
-                else if (this.isGameOver()) {
+                if (KEYS_RESTART.includes(keyCode)) {
                     handled = true;
                     this.resetGame();
                 }
-            }
-            if (KEYS_RESTART.includes(keyCode)) {
-                this.resetGame();
-                handled = true;
-            }
-            if (KEYS_KILL.includes(KEY_Q)) {
-                this.kill();
-                handled = true;
+                if (KEYS_KILL.includes(keyCode)) {
+                    handled = true;
+                    this.kill();
+                }
             }
             if (handled) {
+                this.log('KeyEvent', keyCode);
                 e.preventDefault();
             }
         }
@@ -887,7 +895,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             localStorage.set(constants_1.HIGH_SCORE_KEY, score);
         }
         drawModal() {
-            this.drawGrid();
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
             this.ctx.fillRect(this.px(this.conts.modal.x), this.px(this.conts.modal.y), this.px(this.conts.modal.width), this.px(this.conts.modal.height));
             this.ctx.strokeStyle = '#000';
@@ -1022,6 +1029,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             // TODO
         }
         setScore(score) {
+            this.log('SetScore', score);
             this.currentScore = score;
             if (this.currentScore > this.highScore) {
                 this.isNewHighScore = true;
@@ -1031,7 +1039,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.setScore(this.currentScore + scoreInc);
         }
         loop(time) {
-            // this.log('loop', this.gameState, (time - (this.previousTime || time)));
+            this.log('loop', this.gameState, (time - (this.previousTime || time)));
             const handler = this.loopHandlers[this.gameState];
             if (handler) {
                 handler(time);
@@ -1041,6 +1049,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         loopBeforeStart(time) {
             this.clearGameBoard();
+            this.drawGrid();
             this.drawModal();
             this.writeWord('GREGTRIS', 6, 7, '#092');
             this.writeWord('PRESS', 7, 9, '#06F');
@@ -1050,6 +1059,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         loopLoading(time) {
             this.clearGameBoard();
+            this.drawGrid();
             this.drawModal();
             this.writeWord('GREGTRIS', 6, 7, '#092');
             this.writeWord('LOADING…', 6, 9, '#f00');
@@ -1062,8 +1072,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             // TODO game mechanics
         }
         loopPaused(time) {
-            this.drawOutlilnes();
-            this.setText();
             this.drawModal();
             this.writeWord('PAUSED', 7, 11, '#f20');
         }
@@ -1100,14 +1108,19 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             });
         }
         triggerLoop() {
-            this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
+            if (!this.killed) {
+                this.requestAnimationFrameHandle = requestAnimationFrame(this.boundLoop);
+            }
         }
         begin() {
+            this.killed = false;
             this.setGameState(constants_1.GAME_STATE_BEFORE_START);
             this.beginTime = Date.now();
         }
         resetGame() {
+            this.log('ResetGame');
             this.begin();
+            this.killed = false;
             this.previousTime = null;
             this.loadingTime = null;
             this.startTime = null;
@@ -1117,6 +1130,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.triggerLoop();
         }
         startGame() {
+            this.log('StartGame');
             if (!this.startTime) {
                 this.startTime = Date.now();
             }
@@ -1127,10 +1141,12 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.setGameState(constants_1.GAME_STATE_STARTED);
         }
         pauseGame() {
+            this.log('PauseGame');
             this.pauseTime = Date.now();
             this.setGameState(constants_1.GAME_STATE_PAUSED);
         }
         endGame() {
+            this.log('EndGame');
             this.overTime = Date.now();
             this.setGameState(constants_1.GAME_STATE_OVER);
             if (this.currentScore > this.highScore) {
@@ -1138,11 +1154,17 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         kill() {
-            // TODO, make this cut screen to some page?
-            this.resetGame();
+            this.setGameState(constants_1.GAME_STATE_OVER);
+            this.killed = true;
             if (this.requestAnimationFrameHandle) {
                 cancelAnimationFrame(this.requestAnimationFrameHandle);
             }
+            this.previousTime = null;
+            this.loadingTime = null;
+            this.startTime = null;
+            this.pauseTime = null;
+            this.overTime = null;
+            this.isNewHighScore = false;
         }
     }
     exports.default = Gregtris;
