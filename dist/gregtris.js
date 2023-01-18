@@ -151,7 +151,7 @@ define("alphabet", ["require", "exports"], function (require, exports) {
             [1, 1, 0, 0, 1, 1, 1, 0],
             [1, 1, 0, 0, 0, 1, 1, 0],
             [0, 1, 1, 0, 0, 1, 1, 0],
-            [0, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
         ],
         'i': [
@@ -726,17 +726,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             if (!Number.isNaN(storageHighScore)) {
                 this.highScore = storageHighScore;
             }
-            // this.nextPiece = this.getRandomPiece();
-            // this.setNextPiece();
-            // const p1 = gamePieces.FLAT.clone(DIR_UP);
-            // const p2 = gamePieces.L_RIGHT.clone(DIR_RIGHT);
-            // const p3 = gamePieces.S_LEFT.clone(DIR_LEFT);
-            // const p4 = gamePieces.MIDDLE.clone(DIR_DOWN);
-            // this.drawPieceOnBoard(p1, 1, 1);
-            // this.drawPieceOnBoard(p2, 6, 2);
-            // this.drawPieceOnBoard(p3, 3, 5);
-            // this.drawPieceOnBoard(p4, 5, 7);
-            // this.loop();
             window.addEventListener('keydown', this.boundKeyListener);
         }
         log(...msg) {
@@ -1053,9 +1042,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.drawGrid();
             this.drawModal();
             this.writeWord('GREGTRIS', 6, 7, '#092');
-            this.writeWord('PRESS', 7, 9, '#06F');
+            this.writeWord('PRESS', 7, 9, '#06f');
             this.writeWord('ENTER', 7, 10, '#f60');
-            this.writeWord('TO START', 6, 11, '#f00');
+            this.writeWord('TO START', 6, 11, '#f20');
             this.writeWord('NEW GAME', 6, 12, '#f0f');
         }
         loopLoading(time) {
@@ -1063,7 +1052,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.drawGrid();
             this.drawModal();
             this.writeWord('GREGTRIS', 6, 7, '#092');
-            this.writeWord('LOADING…', 6, 9, '#f00');
+            this.writeWord('LOADING…', 6, 9, '#f20');
         }
         loopStarted(time) {
             this.clearGameBoard();
@@ -1077,9 +1066,21 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('PAUSED', 7, 11, '#f20');
         }
         loopGameOver(time) {
+            this.clearGameBoard();
+            this.drawGrid();
             this.drawModal();
-            this.writeWord('GAME', 7, 11, '#f20');
-            this.writeWord('OVER', 7, 11, '#06f');
+            this.writeWord('GAME', 6, 7, '#00F');
+            this.writeWord('OVER', 10, 7, '#F00');
+            this.writeWord('GAME', 6, 8, '#F00');
+            this.writeWord('OVER', 10, 8, '#00F');
+            this.writeWord('LEVEL', 6, 10, '#666');
+            this.writeWord(`${this.level}`, 14 - `${this.level}`.length, 10, '#092');
+            this.writeWord('SCORE', 6, 12, '#666');
+            this.writeWord(`${this.currentScore}`, 14 - `${this.currentScore}`.length, 13, '#f06');
+            this.writeWord('GAME', 6, 15, '#00F');
+            this.writeWord('OVER', 10, 15, '#F00');
+            this.writeWord('GAME', 6, 16, '#F00');
+            this.writeWord('OVER', 10, 16, '#00F');
         }
         isLoading() {
             return this.gameState === constants_1.GAME_STATE_LOADING;
