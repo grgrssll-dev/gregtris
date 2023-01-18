@@ -616,23 +616,28 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const KEY_LEFT = 'ArrowLeft';
-    const KEY_A = 'a';
+    const KEY_A = 'KeyA';
     const KEY_UP = 'ArrowUp';
-    const KEY_W = 'w';
+    const KEY_W = 'KeyW';
     const KEY_RIGHT = 'ArrowRight';
-    const KEY_D = 'd';
+    const KEY_D = 'KeyD';
     const KEY_SPACE = 'Space';
     const KEY_DOWN = 'ArrowDown';
-    const KEY_S = 's';
+    const KEY_S = 'KeyS';
     const KEY_ENTER = 'Enter';
     const KEY_NUMPAD_ENTER = 'NumpadEnter';
     const KEY_ESCAPE = 'Escape';
+    const KEY_P = 'KeyP';
     const KEY_F2 = 'F2';
+    const KEY_Q = 'KeyQ';
     const KEYS_ROTATE = [KEY_UP, KEY_W];
     const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
     const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
     const KEYS_LEFT = [KEY_LEFT, KEY_A];
     const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
+    const KEYS_PAUSE = [KEY_ESCAPE];
+    const KEYS_RESTART = [KEY_F2, KEY_P];
+    const KEYS_KILL = [KEY_Q];
     const gamePiecesArray = Object.values(gamePieces_1.default);
     const minDir = Math.min(...directions_4.directionsArray);
     const maxDir = Math.max(...directions_4.directionsArray);
@@ -669,6 +674,13 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.overTime = null;
             this.boundKeyListener = this.keyListener.bind(this);
             this.boundLoop = this.loop.bind(this);
+            this.loopHandlers = {
+                [constants_1.GAME_STATE_BEFORE_START]: this.loopBeforeStart.bind(this),
+                [constants_1.GAME_STATE_LOADING]: this.loopLoading.bind(this),
+                [constants_1.GAME_STATE_STARTED]: this.loopStarted.bind(this),
+                [constants_1.GAME_STATE_PAUSED]: this.loopPaused.bind(this),
+                [constants_1.GAME_STATE_OVER]: this.loopGameOver.bind(this),
+            };
             this.requestAnimationFrameHandle = null;
             this.canvas = canvas;
             this.opts = Object.assign(this.opts, {
@@ -732,7 +744,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             const keyCode = e.code || e.key;
             this.log('KeyEvent', keyCode);
             let handled = false;
-            if (this.gameState === constants_1.GAME_STATE_STARTED) {
+            if (this.isStarted()) {
                 if (KEYS_LEFT.includes(keyCode)) {
                     handled = true;
                     this.moveCurrentPiece(directions_4.DIR_LEFT);
@@ -749,23 +761,27 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     handled = true;
                     this.dropCurrentPiece();
                 }
+                if (KEYS_PAUSE.includes(keyCode)) {
+                    this.pauseGame();
+                    handled = true;
+                }
             }
             if (KEYS_ENTER.includes(keyCode)) {
-                if (this.gameState === constants_1.GAME_STATE_BEFORE_START || this.gameState === constants_1.GAME_STATE_PAUSED) {
+                if (this.isDoneLoading() || this.isPaused()) {
                     handled = true;
                     this.startGame();
                 }
-                else if (this.gameState === constants_1.GAME_STATE_OVER) {
+                else if (this.isGameOver()) {
                     handled = true;
                     this.resetGame();
                 }
             }
-            if (keyCode === KEY_ESCAPE) {
-                this.pauseGame();
+            if (KEYS_RESTART.includes(keyCode)) {
+                this.resetGame();
                 handled = true;
             }
-            if (keyCode === KEY_F2) {
-                this.resetGame();
+            if (KEYS_KILL.includes(KEY_Q)) {
+                this.kill();
                 handled = true;
             }
             if (handled) {
@@ -1016,22 +1032,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         loop(time) {
             // this.log('loop', this.gameState, (time - (this.previousTime || time)));
-            switch (this.gameState) {
-                case constants_1.GAME_STATE_BEFORE_START:
-                    this.loopBeforeStart(time);
-                    break;
-                case constants_1.GAME_STATE_LOADING:
-                    this.loopLoading(time);
-                    break;
-                case constants_1.GAME_STATE_STARTED:
-                    this.loopStarted(time);
-                    break;
-                case constants_1.GAME_STATE_PAUSED:
-                    this.loopPaused(time);
-                    break;
-                case constants_1.GAME_STATE_OVER:
-                    this.loopGameOver(time);
-                    break;
+            const handler = this.loopHandlers[this.gameState];
+            if (handler) {
+                handler(time);
             }
             this.previousTime = time;
             this.triggerLoop();
@@ -1065,6 +1068,21 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('PAUSED', 7, 11, '#f20');
         }
         loopGameOver(time) {
+        }
+        isLoading() {
+            return this.gameState === constants_1.GAME_STATE_LOADING;
+        }
+        isDoneLoading() {
+            return this.gameState === constants_1.GAME_STATE_BEFORE_START;
+        }
+        isPaused() {
+            return this.gameState === constants_1.GAME_STATE_PAUSED;
+        }
+        isStarted() {
+            return this.gameState === constants_1.GAME_STATE_STARTED;
+        }
+        isGameOver() {
+            return this.gameState === constants_1.GAME_STATE_OVER;
         }
         init() {
             this.loadingTime = Date.now();

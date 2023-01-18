@@ -37,23 +37,27 @@ import {
 } from './constants';
 
 const KEY_LEFT = 'ArrowLeft';
-const KEY_A = 'a';
+const KEY_A = 'KeyA';
 
 const KEY_UP = 'ArrowUp';
-const KEY_W = 'w';
+const KEY_W = 'KeyW';
 
 const KEY_RIGHT = 'ArrowRight';
-const KEY_D = 'd';
+const KEY_D = 'KeyD';
 const KEY_SPACE = 'Space'
 
 const KEY_DOWN = 'ArrowDown';
-const KEY_S = 's';
+const KEY_S = 'KeyS';
 
 const KEY_ENTER = 'Enter';
 const KEY_NUMPAD_ENTER = 'NumpadEnter';
 
 const KEY_ESCAPE = 'Escape';
+const KEY_P = 'KeyP';
+
 const KEY_F2 = 'F2';
+
+const KEY_Q = 'KeyQ';
 
 const KEYS_ROTATE = [KEY_UP, KEY_W];
 const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
@@ -61,7 +65,8 @@ const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
 const KEYS_LEFT = [KEY_LEFT, KEY_A];
 const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
 const KEYS_PAUSE = [KEY_ESCAPE];
-const KEYS_RESTART = [KEY_F2];
+const KEYS_RESTART = [KEY_F2, KEY_P];
+const KEYS_KILL = [KEY_Q];
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -209,6 +214,10 @@ export default class Gregtris {
                 handled = true;
                 this.dropCurrentPiece();
             }
+            if (KEYS_PAUSE.includes(keyCode)) {
+                this.pauseGame();
+                handled = true;
+            }
         }
         if (KEYS_ENTER.includes(keyCode)) {
             if (this.isDoneLoading() || this.isPaused()) {
@@ -219,12 +228,12 @@ export default class Gregtris {
                 this.resetGame();
             }
         }
-        if (KEYS_PAUSE.includes(keyCode)) {
-            this.pauseGame();
-            handled = true;
-        }
         if (KEYS_RESTART.includes(keyCode)) {
             this.resetGame();
+            handled = true;
+        }
+        if (KEYS_KILL.includes(KEY_Q)) {
+            this.kill();
             handled = true;
         }
         if (handled) {
