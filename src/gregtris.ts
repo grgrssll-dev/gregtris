@@ -292,7 +292,7 @@ export default class Gregtris {
         return arr[rand(0, arr.length - 1)] as T;
     }
 
-    private setText() {
+    private setGameText() {
         const levelText = `LEVEL ${this.level}`;
         this.writeWord(levelText, Math.floor((GAME_COLS - 2 - levelText.length) / 2) + 1 , 1);
         this.writeWord('TOP', 12, 3);
@@ -587,12 +587,13 @@ export default class Gregtris {
     }
 
     private loop(time: number) {
-        this.log('loop', this.gameState, (time - (this.previousTime || time)));
+        const currentTime = Date.now();
+        this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
         const handler = this.loopHandlers[this.gameState];
         if (handler) {
-            handler(time);
+            handler(currentTime);
         }
-        this.previousTime = time;
+        this.previousTime = currentTime;
         this.triggerLoop();
     }
 
@@ -619,7 +620,7 @@ export default class Gregtris {
         this.clearGameBoard();
         this.drawGrid();
         this.drawOutlilnes();
-        this.setText();
+        this.setGameText();
         // TODO game mechanics
     }
 
@@ -629,7 +630,9 @@ export default class Gregtris {
     }
 
     private loopGameOver(time: number) {
-        
+        this.drawModal();
+        this.writeWord('GAME', 7, 11, '#f20');
+        this.writeWord('OVER', 7, 11, '#06f');
     }
 
     private isLoading() {
@@ -721,6 +724,7 @@ export default class Gregtris {
     }
 
     kill() {
+        this.loopGameOver(Date.now());
         this.setGameState(GAME_STATE_GAME_OVER);
         this.killed = true;
         if (this.requestAnimationFrameHandle) {

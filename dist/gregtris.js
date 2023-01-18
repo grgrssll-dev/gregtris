@@ -826,7 +826,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         randItem(arr) {
             return arr[(0, utils_1.rand)(0, arr.length - 1)];
         }
-        setText() {
+        setGameText() {
             const levelText = `LEVEL ${this.level}`;
             this.writeWord(levelText, Math.floor((constants_1.GAME_COLS - 2 - levelText.length) / 2) + 1, 1);
             this.writeWord('TOP', 12, 3);
@@ -1039,12 +1039,13 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.setScore(this.currentScore + scoreInc);
         }
         loop(time) {
-            this.log('loop', this.gameState, (time - (this.previousTime || time)));
+            const currentTime = Date.now();
+            this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
             const handler = this.loopHandlers[this.gameState];
             if (handler) {
-                handler(time);
+                handler(currentTime);
             }
-            this.previousTime = time;
+            this.previousTime = currentTime;
             this.triggerLoop();
         }
         loopBeforeStart(time) {
@@ -1068,7 +1069,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.clearGameBoard();
             this.drawGrid();
             this.drawOutlilnes();
-            this.setText();
+            this.setGameText();
             // TODO game mechanics
         }
         loopPaused(time) {
@@ -1076,6 +1077,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('PAUSED', 7, 11, '#f20');
         }
         loopGameOver(time) {
+            this.drawModal();
+            this.writeWord('GAME', 7, 11, '#f20');
+            this.writeWord('OVER', 7, 11, '#06f');
         }
         isLoading() {
             return this.gameState === constants_1.GAME_STATE_LOADING;
@@ -1154,6 +1158,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         kill() {
+            this.loopGameOver(Date.now());
             this.setGameState(constants_1.GAME_STATE_OVER);
             this.killed = true;
             if (this.requestAnimationFrameHandle) {
