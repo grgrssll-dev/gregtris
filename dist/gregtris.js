@@ -327,10 +327,14 @@ define("alphabet", ["require", "exports"], function (require, exports) {
     };
     exports.default = alphabet;
 });
+define("interfaces", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
 define("constants", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
+    exports.AnimStates = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GameStates = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.Rules = exports.RULE_ROW_CLEAR_DURATION = exports.RULE_LOCK_DOWN_DELAY = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
     exports.ROWS = 20;
     exports.COLS = 10;
     exports.GAME_ROWS = 24;
@@ -343,14 +347,32 @@ define("constants", ["require", "exports"], function (require, exports) {
     exports.ALPHA_DIVISOR = 8;
     exports.DIMENSION_RATIO = exports.GAME_COLS / exports.GAME_ROWS;
     exports.HIGH_SCORE_KEY = 'HighScore';
+    exports.RULE_LOCK_DOWN_DELAY = 0.5;
+    exports.RULE_ROW_CLEAR_DURATION = 0.5;
+    exports.Rules = {
+        LOCK_DOWN_DELAY: exports.RULE_LOCK_DOWN_DELAY,
+        ROW_CLEAR_DURATION: exports.RULE_ROW_CLEAR_DURATION,
+    };
     exports.GAME_STATE_LOADING = 'LOADING';
     exports.GAME_STATE_BEFORE_START = 'BEFORE_START';
     exports.GAME_STATE_STARTED = 'STARTED';
     exports.GAME_STATE_PAUSED = 'PAUSED';
     exports.GAME_STATE_OVER = 'OVER';
+    exports.GameStates = {
+        LOADING: exports.GAME_STATE_LOADING,
+        BEFORE_START: exports.GAME_STATE_BEFORE_START,
+        STARTED: exports.GAME_STATE_STARTED,
+        PAUSED: exports.GAME_STATE_PAUSED,
+        OVER: exports.GAME_STATE_OVER,
+    };
     exports.ANIMATION_STATE_DROPPING = 'DROPPING';
     exports.ANIMATION_STATE_CLEARING = 'CLEARING';
     exports.ANIMATION_STATE_WAITING = 'WAITING';
+    exports.AnimStates = {
+        DROPPING: exports.ANIMATION_STATE_DROPPING,
+        CLEARING: exports.ANIMATION_STATE_CLEARING,
+        WAITING: exports.ANIMATION_STATE_WAITING,
+    };
     const Constants = {
         ROWS: exports.ROWS,
         COLS: exports.COLS,
@@ -363,23 +385,14 @@ define("constants", ["require", "exports"], function (require, exports) {
         FACET_DIVISOR: exports.FACET_DIVISOR,
         ALPHA_DIVISOR: exports.ALPHA_DIVISOR,
         DIMENSION_RATIO: exports.DIMENSION_RATIO,
-        GAME_STATE_LOADING: exports.GAME_STATE_LOADING,
-        GAME_STATE_BEFORE_START: exports.GAME_STATE_BEFORE_START,
-        GAME_STATE_STARTED: exports.GAME_STATE_STARTED,
-        GAME_STATE_PAUSED: exports.GAME_STATE_PAUSED,
-        GAME_STATE_OVER: exports.GAME_STATE_OVER,
-        ANIMATION_STATE_DROPPING: exports.ANIMATION_STATE_DROPPING,
-        ANIMATION_STATE_CLEARING: exports.ANIMATION_STATE_CLEARING,
-        ANIMATION_STATE_WAITING: exports.ANIMATION_STATE_WAITING,
+        GameStates: exports.GameStates,
+        AnimStates: exports.AnimStates,
         HIGH_SCORE_KEY: exports.HIGH_SCORE_KEY,
+        Rules: exports.Rules,
     };
     exports.default = Constants;
 });
 define("container", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
-define("interfaces", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
 });

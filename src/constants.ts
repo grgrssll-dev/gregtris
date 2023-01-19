@@ -1,3 +1,5 @@
+import { GameState, AnimState } from './interfaces';
+
 export const ROWS = 20;
 export const COLS = 10;
 export const GAME_ROWS = 24;
@@ -11,17 +13,16 @@ export const ALPHA_DIVISOR = 8;
 export const DIMENSION_RATIO = GAME_COLS / GAME_ROWS;
 export const HIGH_SCORE_KEY = 'HighScore';
 
-
 export const GAME_STATE_LOADING = 'LOADING';
 export const GAME_STATE_BEFORE_START = 'BEFORE_START';
 export const GAME_STATE_STARTED = 'STARTED';
 export const GAME_STATE_PAUSED = 'PAUSED';
 export const GAME_STATE_OVER = 'OVER';
 
-
 export const ANIMATION_STATE_DROPPING = 'DROPPING';
 export const ANIMATION_STATE_CLEARING = 'CLEARING';
 export const ANIMATION_STATE_WAITING = 'WAITING';
+
 
 const Constants = {
     ROWS,
@@ -35,6 +36,7 @@ const Constants = {
     FACET_DIVISOR,
     ALPHA_DIVISOR,
     DIMENSION_RATIO,
+    HIGH_SCORE_KEY,
     GAME_STATE_LOADING,
     GAME_STATE_BEFORE_START,
     GAME_STATE_STARTED,
@@ -43,7 +45,6 @@ const Constants = {
     ANIMATION_STATE_DROPPING,
     ANIMATION_STATE_CLEARING,
     ANIMATION_STATE_WAITING,
-    HIGH_SCORE_KEY,
 };
 
 export default Constants;

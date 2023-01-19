@@ -29,46 +29,10 @@ import {
     GAME_STATE_BEFORE_START,
     GAME_STATE_STARTED,
     GAME_STATE_PAUSED,
-    GAME_STATE_OVER as GAME_STATE_GAME_OVER,
-    ANIMATION_STATE_DROPPING,
-    ANIMATION_STATE_CLEARING,
-    ANIMATION_STATE_WAITING,
+    GAME_STATE_OVER,
     HIGH_SCORE_KEY,
 } from './constants';
-
-const KEY_LEFT = 'ArrowLeft';
-const KEY_A = 'KeyA';
-
-const KEY_UP = 'ArrowUp';
-const KEY_W = 'KeyW';
-
-const KEY_RIGHT = 'ArrowRight';
-const KEY_D = 'KeyD';
-const KEY_SPACE = 'Space'
-
-const KEY_DOWN = 'ArrowDown';
-const KEY_S = 'KeyS';
-
-const KEY_ENTER = 'Enter';
-const KEY_NUMPAD_ENTER = 'NumpadEnter';
-
-const KEY_ESCAPE = 'Escape';
-const KEY_P = 'KeyP';
-
-const KEY_F2 = 'F2';
-const KEY_R = 'KeyR';
-
-const KEY_Q = 'KeyQ';
-const KEY_K = 'KeyK';
-
-const KEYS_ROTATE = [KEY_UP, KEY_W];
-const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
-const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
-const KEYS_LEFT = [KEY_LEFT, KEY_A];
-const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
-const KEYS_PAUSE = [KEY_ESCAPE, KEY_P];
-const KEYS_RESTART = [KEY_F2, KEY_R];
-const KEYS_KILL = [KEY_Q, KEY_K];
+import Keys from './keys';
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -117,6 +81,8 @@ export default class Gregtris {
     private startTime: number|null = null;
     private pauseTime: number|null = null;
     private overTime: number|null = null;
+    private pieceTime: number|null = null;
+    private animaationTime: number|null = null;
 
     private boundKeyListener = this.keyListener.bind(this);
     private boundLoop = this.loop.bind(this);
@@ -126,7 +92,7 @@ export default class Gregtris {
         [GAME_STATE_LOADING]: this.loopLoading.bind(this),
         [GAME_STATE_STARTED]: this.loopStarted.bind(this),
         [GAME_STATE_PAUSED]: this.loopPaused.bind(this),
-        [GAME_STATE_GAME_OVER]: this.loopGameOver.bind(this),
+        [GAME_STATE_OVER]: this.loopGameOver.bind(this),
     };
 
     private requestAnimationFrameHandle: number|null = null;
@@ -197,28 +163,32 @@ export default class Gregtris {
         let handled = false;
         if (!modifierKey) {
             if (this.isStarted()) {
-                if (KEYS_LEFT.includes(keyCode)) {
+                if (Keys.LEFT.includes(keyCode)) {
                     handled = true;
                     this.moveCurrentPiece(DIR_LEFT);
                 }
-                if (KEYS_RIGHT.includes(keyCode)) {
+                if (Keys.RIGHT.includes(keyCode)) {
                     handled = true;
                     this.moveCurrentPiece(DIR_RIGHT);
                 }
-                if (KEYS_ROTATE.includes(keyCode)) {
+                if (Keys.ROTATE.includes(keyCode)) {
                     handled = true;
                     this.rotateCurrentPiece();
                 }
-                if (KEYS_DROP.includes(keyCode)) {
+                if (Keys.DROP.includes(keyCode)) {
                     handled = true;
-                    this.dropCurrentPiece();
+                    this.dropCurrentPiece(false);
                 }
-                if (KEYS_PAUSE.includes(keyCode)) {
+                if (Keys.HARD_DROP.includes(keyCode)) {
+                    handled = true;
+                    this.dropCurrentPiece(true);
+                }
+                if (Keys.PAUSE.includes(keyCode)) {
                     handled = true;
                     this.pauseGame();
                 }
             }
-            if (KEYS_ENTER.includes(keyCode)) {
+            if (Keys.ENTER.includes(keyCode)) {
                 if (this.isDoneLoading() || this.isPaused()) {
                     handled = true;
                     this.startGame();
@@ -227,11 +197,11 @@ export default class Gregtris {
                     this.resetGame();
                 }
             }
-            if (KEYS_RESTART.includes(keyCode)) {
+            if (Keys.RESTART.includes(keyCode)) {
                 handled = true;
                 this.resetGame();
             }
-            if (KEYS_KILL.includes(keyCode)) {
+            if (Keys.KILL.includes(keyCode)) {
                 handled = true;
                 this.kill();
             }
@@ -266,7 +236,7 @@ export default class Gregtris {
         this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
     }
 
-    private dropCurrentPiece() {
+    private dropCurrentPiece(hardDrop: boolean) {
         
     }
 
@@ -650,7 +620,7 @@ export default class Gregtris {
     }
 
     private isGameOver() {
-        return this.gameState === GAME_STATE_GAME_OVER;
+        return this.gameState === GAME_STATE_OVER;
     }
 
     init(): Promise<void> {
@@ -715,7 +685,7 @@ export default class Gregtris {
     endGame() {
         this.log('EndGame');
         this.overTime = Date.now();
-        this.setGameState(GAME_STATE_GAME_OVER);
+        this.setGameState(GAME_STATE_OVER);
         if (this.currentScore > this.highScore) {
             this.setHighScore(this.currentScore);
         }
@@ -723,7 +693,7 @@ export default class Gregtris {
 
     kill() {
         this.loopGameOver(Date.now());
-        this.setGameState(GAME_STATE_GAME_OVER);
+        this.setGameState(GAME_STATE_OVER);
         this.killed = true;
         if (this.requestAnimationFrameHandle) {
             cancelAnimationFrame(this.requestAnimationFrameHandle);
