@@ -51,13 +51,12 @@ export default class Gregtris {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
 
-    private bucket: number[][] = [];
+    private bucket: string[][] = [];
 
     private conts: Record<string, Container> = {
         game: { x: 0, y: 0, width: GAME_COLS, height: GAME_ROWS },
         board: { x: 1, y: 3, width: COLS, height: ROWS },
         title: { x: 1, y: 1, width: GAME_COLS - (MARGIN * 2), height: 1 },
-        info: { x: COLS + (MARGIN * 2), y: 3, width: GAME_COLS - COLS - (MARGIN * 3), height: 0 },
         score: { x: COLS + (MARGIN * 2), y: 3, width: 7, height: 12 },
         next: { x: COLS + (MARGIN * 2), y: 16, width: 7, height: 7 },
         modal: { x: 5, y: 6, width: 10, height: 12 },
@@ -110,7 +109,7 @@ export default class Gregtris {
             throw new Error('Invalid canvas');
         }
         this.log('options', this.opts);
-        this.log('KeyBoardShorcuts', { KEYS_ROTATE, KEYS_RIGHT, KEYS_DROP, KEYS_LEFT, KEYS_ENTER, KEYS_PAUSE, KEYS_RESTART, KEYS_KILL });
+        this.log('KeyBoardShorcuts', { ...Keys });
         const ctx = this.canvas.getContext('2d');
         if (!ctx) {
             throw new Error('Missing Rendering Context');
@@ -129,9 +128,9 @@ export default class Gregtris {
         this.canvas.style.width = `${Math.floor(this.width / MX)}px`;
         this.canvas.style.height = `${Math.floor(this.height / MX)}px`;
         for(let r = 0; r < ROWS; r++) {
-            const row: number[] = [];
+            const row: string[] = [];
             for (let c = 0; c < COLS; c++) {
-                row.push(0);
+                row.push('');
             }
             this.bucket.push(row);
         }
@@ -139,6 +138,7 @@ export default class Gregtris {
         if (!Number.isNaN(storageHighScore)) {
             this.highScore = storageHighScore;
         }
+        this.nextPiece = this.getRandomPiece();
 
         window.addEventListener('keydown', this.boundKeyListener);
     }
@@ -236,10 +236,6 @@ export default class Gregtris {
         this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
     }
 
-    private dropCurrentPiece(hardDrop: boolean) {
-        
-    }
-
     private randDirection(): Direction {
         return rand(minDir, maxDir) as Direction;
     }
@@ -251,29 +247,19 @@ export default class Gregtris {
     private setGameText() {
         const levelText = `LEVEL ${this.level}`;
         this.writeWord(levelText, Math.floor((GAME_COLS - 2 - levelText.length) / 2) + 1 , 1);
-        this.writeWord('TOP', 12, 3);
-        this.writeWord(`${this.highScore}`, 12, 4);
-        this.writeWord('SCORE', 12, 7);
-        this.writeWord(`${this.currentScore}`, 12, 8);
-        this.writeWord('LINES', 12, 11);
-        this.writeWord(`${this.linesCleared}`, 12, 12);
-        this.writeWord('NEXT', 12, 16);
+        this.writeWord('TOP', this.conts.score.x, this.conts.score.y);
+        this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + MARGIN);
+        this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (MARGIN * 4));
+        this.writeWord(`${this.currentScore}`, this.conts.score.x, this.conts.score.y + (MARGIN * 5));
+        this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (MARGIN * 8));
+        this.writeWord(`${this.linesCleared}`, 12, this.conts.score.y + (MARGIN * 9));
+        this.writeWord('NEXT', this.conts.next.x, this.conts.next.y);
     }
 
     private getRandomPiece() {
         gamePiecesArray.sort();
         const direction = this.randDirection();
         return this.randItem<Piece>(gamePiecesArray).clone(direction);
-    }
-
-    private setNextPiece(): CurrentPiece {
-        const x = Math.floor((COLS - this.nextPiece.getCols()) / 2);
-        const y = 0;
-        this.currentPiece = CurrentPiece.fromPiece(this.nextPiece, x, y);
-        this.nextPiece = this.getRandomPiece();
-        this.log('NextPiece', this.nextPiece);
-        this.placePiece(this.nextPiece, this.conts.next.x + MARGIN, this.conts.next.y + (MARGIN * 2));
-        return this.currentPiece;
     }
 
     private px(gridCoord: number) :number {
@@ -314,7 +300,6 @@ export default class Gregtris {
         const {
             board,
             title,
-            info,
             next,
             score,
         } = this.conts;
@@ -331,12 +316,6 @@ export default class Gregtris {
             this.px(title.y), 
             this.px(title.width), 
             this.px(title.height)
-        );
-        this.ctx.strokeRect(
-            this.px(info.x), 
-            this.px(info.y), 
-            this.px(info.width), 
-            this.px(info.height)
         );
         this.ctx.strokeRect(
             this.px(next.x), 
@@ -384,17 +363,9 @@ export default class Gregtris {
     }
 
     private fitPiece(piece: Piece, x: number, y: number): { safeX: number, safeY: number} {
-        let toX = x;
-        let toY = y;
-        if (piece.getRows() + y >= ROWS) {
-            toY = ROWS - piece.getRows();
-        }
-        if (piece.getCols() + x >= COLS) {
-            toX = COLS - piece.getCols();
-        }
         return {
-            safeX: toX,
-            safeY: toY,
+            safeX: Math.min(x, Math.max(0, COLS - piece.getCols())),
+            safeY: Math.min(y, Math.max(0, ROWS - piece.getRows())),
         };
     }
 
@@ -438,9 +409,23 @@ export default class Gregtris {
         return this;
     }
 
-    private drawPieceOnBoard(piece: Piece, x: number, y: number) {
-        const { safeX, safeY } = this.fitPiece(piece, x, y);
+    private drawPieceOnBoard(piece: CurrentPiece) {
+        const { safeX, safeY } = this.fitPiece(piece, piece.getX(), piece.getY());
         this.placePiece(piece, this.boardOffset('x', safeX), this.boardOffset('y', safeY));
+        return this;
+    }
+
+    private initializePiece() {
+        let piece = this.nextPiece;
+        if (!piece) {
+            this.currentPiece = CurrentPiece.fromPiece(this.getRandomPiece(), 0, 0);
+        } else {
+            this.currentPiece = CurrentPiece.fromPiece(piece, 0, 0);
+        }
+        this.nextPiece = this.getRandomPiece();
+        const x = Math.floor((COLS - this.currentPiece.getCols()) / 2);
+        this.currentPiece.setX(x);
+        this.pieceTime = Date.now();
         return this;
     }
 
@@ -461,6 +446,18 @@ export default class Gregtris {
             });
         });
         return this;
+    }
+
+    private fillSquare(x: number, y: number) {
+        if (this.bucket[y][x]) {
+            const dim = this.px(1);
+            const pX = this.px(x);
+            const pY = this.px(y);
+            this.ctx.fillStyle = `${this.bucket[y][x]}`;
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.fillRect(pX, pY, dim, dim);
+            this.drawFacets(pX, pY);
+        }
     }
 
     private drawLetter(letter: string, x: number, y: number, color = '#000') {
@@ -501,8 +498,18 @@ export default class Gregtris {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    private addPieceToBucket(piece: Piece, x: number, y: number) {
+    private dropCurrentPiece(hardDrop: boolean) {
         // TODO
+    }
+
+    private addPieceToBucket(piece: Piece, x: number, y: number) {
+        for (let bX = 0; bX < piece.getCols(); bX++) {
+            for (let bY = 0; bY < piece.getRows(); bY ++) {
+                if (!this.bucket[y + bY][x + bX]) {
+                    this.bucket[y + bY][x + bX] = piece.getColor();
+                }
+            }
+        }
     }
 
     private clearBucketRectangle() {
@@ -515,7 +522,11 @@ export default class Gregtris {
     }
 
     private drawBucket() {
-        // TODO
+        for (let y = 0; y < this.bucket.length; y++) {
+            for (let x = 0; x < this.bucket[y].length; x++) {
+                this.fillSquare(x, y);
+            }
+        }
     }
 
     private detectCollision(piece: Piece, x: number, y: number) {
@@ -528,6 +539,15 @@ export default class Gregtris {
 
     private clearRow(y: number) {
         // TODO
+    }
+
+    private drawCurrentPiece() {
+        this.drawPieceOnBoard(this.currentPiece);
+    }
+
+    private drawNextPiece() {
+        const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
+        this.placePiece(this.nextPiece, nextX, this.conts.next.y + (MARGIN * 2));
     }
 
     private setScore(score: number) {
@@ -544,7 +564,7 @@ export default class Gregtris {
 
     private loop(time: number) {
         const currentTime = Date.now();
-        this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
+        // this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
         const handler = this.loopHandlers[this.gameState];
         if (handler) {
             handler(currentTime);
@@ -577,7 +597,9 @@ export default class Gregtris {
         this.drawGrid();
         this.drawOutlilnes();
         this.setGameText();
-        // TODO game mechanics
+        this.drawCurrentPiece();
+        this.drawNextPiece();
+        this.drawBucket();
     }
 
     private loopPaused(time: number) {
@@ -673,6 +695,7 @@ export default class Gregtris {
             this.startTime = this.startTime + (Date.now() - this.pauseTime);
             this.pauseTime = null;
         }
+        this.initializePiece();
         this.setGameState(GAME_STATE_STARTED);
     }
 

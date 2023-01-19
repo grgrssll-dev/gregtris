@@ -334,7 +334,7 @@ define("interfaces", ["require", "exports"], function (require, exports) {
 define("constants", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.AnimStates = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GameStates = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.Rules = exports.RULE_ROW_CLEAR_DURATION = exports.RULE_LOCK_DOWN_DELAY = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
+    exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
     exports.ROWS = 20;
     exports.COLS = 10;
     exports.GAME_ROWS = 24;
@@ -347,32 +347,14 @@ define("constants", ["require", "exports"], function (require, exports) {
     exports.ALPHA_DIVISOR = 8;
     exports.DIMENSION_RATIO = exports.GAME_COLS / exports.GAME_ROWS;
     exports.HIGH_SCORE_KEY = 'HighScore';
-    exports.RULE_LOCK_DOWN_DELAY = 0.5;
-    exports.RULE_ROW_CLEAR_DURATION = 0.5;
-    exports.Rules = {
-        LOCK_DOWN_DELAY: exports.RULE_LOCK_DOWN_DELAY,
-        ROW_CLEAR_DURATION: exports.RULE_ROW_CLEAR_DURATION,
-    };
     exports.GAME_STATE_LOADING = 'LOADING';
     exports.GAME_STATE_BEFORE_START = 'BEFORE_START';
     exports.GAME_STATE_STARTED = 'STARTED';
     exports.GAME_STATE_PAUSED = 'PAUSED';
     exports.GAME_STATE_OVER = 'OVER';
-    exports.GameStates = {
-        LOADING: exports.GAME_STATE_LOADING,
-        BEFORE_START: exports.GAME_STATE_BEFORE_START,
-        STARTED: exports.GAME_STATE_STARTED,
-        PAUSED: exports.GAME_STATE_PAUSED,
-        OVER: exports.GAME_STATE_OVER,
-    };
     exports.ANIMATION_STATE_DROPPING = 'DROPPING';
     exports.ANIMATION_STATE_CLEARING = 'CLEARING';
     exports.ANIMATION_STATE_WAITING = 'WAITING';
-    exports.AnimStates = {
-        DROPPING: exports.ANIMATION_STATE_DROPPING,
-        CLEARING: exports.ANIMATION_STATE_CLEARING,
-        WAITING: exports.ANIMATION_STATE_WAITING,
-    };
     const Constants = {
         ROWS: exports.ROWS,
         COLS: exports.COLS,
@@ -385,10 +367,15 @@ define("constants", ["require", "exports"], function (require, exports) {
         FACET_DIVISOR: exports.FACET_DIVISOR,
         ALPHA_DIVISOR: exports.ALPHA_DIVISOR,
         DIMENSION_RATIO: exports.DIMENSION_RATIO,
-        GameStates: exports.GameStates,
-        AnimStates: exports.AnimStates,
         HIGH_SCORE_KEY: exports.HIGH_SCORE_KEY,
-        Rules: exports.Rules,
+        GAME_STATE_LOADING: exports.GAME_STATE_LOADING,
+        GAME_STATE_BEFORE_START: exports.GAME_STATE_BEFORE_START,
+        GAME_STATE_STARTED: exports.GAME_STATE_STARTED,
+        GAME_STATE_PAUSED: exports.GAME_STATE_PAUSED,
+        GAME_STATE_OVER: exports.GAME_STATE_OVER,
+        ANIMATION_STATE_DROPPING: exports.ANIMATION_STATE_DROPPING,
+        ANIMATION_STATE_CLEARING: exports.ANIMATION_STATE_CLEARING,
+        ANIMATION_STATE_WAITING: exports.ANIMATION_STATE_WAITING,
     };
     exports.default = Constants;
 });
@@ -625,34 +612,52 @@ define("utils", ["require", "exports"], function (require, exports) {
     }
     exports.rand = rand;
 });
-define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1) {
+define("keys", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const KEY_LEFT = 'ArrowLeft';
-    const KEY_A = 'KeyA';
-    const KEY_UP = 'ArrowUp';
-    const KEY_W = 'KeyW';
-    const KEY_RIGHT = 'ArrowRight';
-    const KEY_D = 'KeyD';
-    const KEY_SPACE = 'Space';
-    const KEY_DOWN = 'ArrowDown';
-    const KEY_S = 'KeyS';
-    const KEY_ENTER = 'Enter';
-    const KEY_NUMPAD_ENTER = 'NumpadEnter';
-    const KEY_ESCAPE = 'Escape';
-    const KEY_P = 'KeyP';
-    const KEY_F2 = 'F2';
-    const KEY_R = 'KeyR';
-    const KEY_Q = 'KeyQ';
-    const KEY_K = 'KeyK';
-    const KEYS_ROTATE = [KEY_UP, KEY_W];
-    const KEYS_RIGHT = [KEY_RIGHT, KEY_D];
-    const KEYS_DROP = [KEY_DOWN, KEY_S, KEY_SPACE];
-    const KEYS_LEFT = [KEY_LEFT, KEY_A];
-    const KEYS_ENTER = [KEY_ENTER, KEY_NUMPAD_ENTER];
-    const KEYS_PAUSE = [KEY_ESCAPE, KEY_P];
-    const KEYS_RESTART = [KEY_F2, KEY_R];
-    const KEYS_KILL = [KEY_Q, KEY_K];
+    exports.KEYS_KILL = exports.KEYS_RESTART = exports.KEYS_PAUSE = exports.KEYS_ENTER = exports.KEYS_LEFT = exports.KEYS_HARD_DROP = exports.KEYS_DROP = exports.KEYS_RIGHT = exports.KEYS_ROTATE = exports.KEY_K = exports.KEY_Q = exports.KEY_R = exports.KEY_F2 = exports.KEY_P = exports.KEY_ESCAPE = exports.KEY_NUMPAD_ENTER = exports.KEY_ENTER = exports.KEY_S = exports.KEY_DOWN = exports.KEY_SPACE = exports.KEY_D = exports.KEY_RIGHT = exports.KEY_W = exports.KEY_UP = exports.KEY_A = exports.KEY_LEFT = void 0;
+    exports.KEY_LEFT = 'ArrowLeft';
+    exports.KEY_A = 'KeyA';
+    exports.KEY_UP = 'ArrowUp';
+    exports.KEY_W = 'KeyW';
+    exports.KEY_RIGHT = 'ArrowRight';
+    exports.KEY_D = 'KeyD';
+    exports.KEY_SPACE = 'Space';
+    exports.KEY_DOWN = 'ArrowDown';
+    exports.KEY_S = 'KeyS';
+    exports.KEY_ENTER = 'Enter';
+    exports.KEY_NUMPAD_ENTER = 'NumpadEnter';
+    exports.KEY_ESCAPE = 'Escape';
+    exports.KEY_P = 'KeyP';
+    exports.KEY_F2 = 'F2';
+    exports.KEY_R = 'KeyR';
+    exports.KEY_Q = 'KeyQ';
+    exports.KEY_K = 'KeyK';
+    exports.KEYS_ROTATE = [exports.KEY_UP, exports.KEY_W];
+    exports.KEYS_RIGHT = [exports.KEY_RIGHT, exports.KEY_D];
+    exports.KEYS_DROP = [exports.KEY_DOWN, exports.KEY_S];
+    exports.KEYS_HARD_DROP = [exports.KEY_SPACE];
+    exports.KEYS_LEFT = [exports.KEY_LEFT, exports.KEY_A];
+    exports.KEYS_ENTER = [exports.KEY_ENTER, exports.KEY_NUMPAD_ENTER];
+    exports.KEYS_PAUSE = [exports.KEY_ESCAPE, exports.KEY_P];
+    exports.KEYS_RESTART = [exports.KEY_F2, exports.KEY_R];
+    exports.KEYS_KILL = [exports.KEY_Q, exports.KEY_K];
+    const Keys = {
+        ROTATE: exports.KEYS_ROTATE,
+        RIGHT: exports.KEYS_RIGHT,
+        DROP: exports.KEYS_DROP,
+        HARD_DROP: exports.KEYS_HARD_DROP,
+        LEFT: exports.KEYS_LEFT,
+        ENTER: exports.KEYS_ENTER,
+        PAUSE: exports.KEYS_PAUSE,
+        RESTART: exports.KEYS_RESTART,
+        KILL: exports.KEYS_KILL,
+    };
+    exports.default = Keys;
+});
+define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants", "keys"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1, keys_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     const gamePiecesArray = Object.values(gamePieces_1.default);
     const minDir = Math.min(...directions_4.directionsArray);
     const maxDir = Math.max(...directions_4.directionsArray);
@@ -670,7 +675,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 game: { x: 0, y: 0, width: constants_1.GAME_COLS, height: constants_1.GAME_ROWS },
                 board: { x: 1, y: 3, width: constants_1.COLS, height: constants_1.ROWS },
                 title: { x: 1, y: 1, width: constants_1.GAME_COLS - (constants_1.MARGIN * 2), height: 1 },
-                info: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 3, width: constants_1.GAME_COLS - constants_1.COLS - (constants_1.MARGIN * 3), height: 0 },
                 score: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 3, width: 7, height: 12 },
                 next: { x: constants_1.COLS + (constants_1.MARGIN * 2), y: 16, width: 7, height: 7 },
                 modal: { x: 5, y: 6, width: 10, height: 12 },
@@ -688,6 +692,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.startTime = null;
             this.pauseTime = null;
             this.overTime = null;
+            this.pieceTime = null;
+            this.animaationTime = null;
             this.boundKeyListener = this.keyListener.bind(this);
             this.boundLoop = this.loop.bind(this);
             this.loopHandlers = {
@@ -710,7 +716,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 throw new Error('Invalid canvas');
             }
             this.log('options', this.opts);
-            this.log('KeyBoardShorcuts', { KEYS_ROTATE, KEYS_RIGHT, KEYS_DROP, KEYS_LEFT, KEYS_ENTER, KEYS_PAUSE, KEYS_RESTART, KEYS_KILL });
+            this.log('KeyBoardShorcuts', Object.assign({}, keys_1.default));
             const ctx = this.canvas.getContext('2d');
             if (!ctx) {
                 throw new Error('Missing Rendering Context');
@@ -731,7 +737,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             for (let r = 0; r < constants_1.ROWS; r++) {
                 const row = [];
                 for (let c = 0; c < constants_1.COLS; c++) {
-                    row.push(0);
+                    row.push('');
                 }
                 this.bucket.push(row);
             }
@@ -739,6 +745,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             if (!Number.isNaN(storageHighScore)) {
                 this.highScore = storageHighScore;
             }
+            this.nextPiece = this.getRandomPiece();
             window.addEventListener('keydown', this.boundKeyListener);
         }
         log(...msg) {
@@ -753,28 +760,32 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             let handled = false;
             if (!modifierKey) {
                 if (this.isStarted()) {
-                    if (KEYS_LEFT.includes(keyCode)) {
+                    if (keys_1.default.LEFT.includes(keyCode)) {
                         handled = true;
                         this.moveCurrentPiece(directions_4.DIR_LEFT);
                     }
-                    if (KEYS_RIGHT.includes(keyCode)) {
+                    if (keys_1.default.RIGHT.includes(keyCode)) {
                         handled = true;
                         this.moveCurrentPiece(directions_4.DIR_RIGHT);
                     }
-                    if (KEYS_ROTATE.includes(keyCode)) {
+                    if (keys_1.default.ROTATE.includes(keyCode)) {
                         handled = true;
                         this.rotateCurrentPiece();
                     }
-                    if (KEYS_DROP.includes(keyCode)) {
+                    if (keys_1.default.DROP.includes(keyCode)) {
                         handled = true;
-                        this.dropCurrentPiece();
+                        this.dropCurrentPiece(false);
                     }
-                    if (KEYS_PAUSE.includes(keyCode)) {
+                    if (keys_1.default.HARD_DROP.includes(keyCode)) {
+                        handled = true;
+                        this.dropCurrentPiece(true);
+                    }
+                    if (keys_1.default.PAUSE.includes(keyCode)) {
                         handled = true;
                         this.pauseGame();
                     }
                 }
-                if (KEYS_ENTER.includes(keyCode)) {
+                if (keys_1.default.ENTER.includes(keyCode)) {
                     if (this.isDoneLoading() || this.isPaused()) {
                         handled = true;
                         this.startGame();
@@ -784,11 +795,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                         this.resetGame();
                     }
                 }
-                if (KEYS_RESTART.includes(keyCode)) {
+                if (keys_1.default.RESTART.includes(keyCode)) {
                     handled = true;
                     this.resetGame();
                 }
-                if (KEYS_KILL.includes(keyCode)) {
+                if (keys_1.default.KILL.includes(keyCode)) {
                     handled = true;
                     this.kill();
                 }
@@ -820,8 +831,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         rotateCurrentPiece() {
             this.currentPiece = this.currentPiece.clone(directions_4.DIR_RIGHT);
         }
-        dropCurrentPiece() {
-        }
         randDirection() {
             return (0, utils_1.rand)(minDir, maxDir);
         }
@@ -831,27 +840,18 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         setGameText() {
             const levelText = `LEVEL ${this.level}`;
             this.writeWord(levelText, Math.floor((constants_1.GAME_COLS - 2 - levelText.length) / 2) + 1, 1);
-            this.writeWord('TOP', 12, 3);
-            this.writeWord(`${this.highScore}`, 12, 4);
-            this.writeWord('SCORE', 12, 7);
-            this.writeWord(`${this.currentScore}`, 12, 8);
-            this.writeWord('LINES', 12, 11);
-            this.writeWord(`${this.linesCleared}`, 12, 12);
-            this.writeWord('NEXT', 12, 16);
+            this.writeWord('TOP', this.conts.score.x, this.conts.score.y);
+            this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + constants_1.MARGIN);
+            this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 4));
+            this.writeWord(`${this.currentScore}`, this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 5));
+            this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 8));
+            this.writeWord(`${this.linesCleared}`, 12, this.conts.score.y + (constants_1.MARGIN * 9));
+            this.writeWord('NEXT', this.conts.next.x, this.conts.next.y);
         }
         getRandomPiece() {
             gamePiecesArray.sort();
             const direction = this.randDirection();
             return this.randItem(gamePiecesArray).clone(direction);
-        }
-        setNextPiece() {
-            const x = Math.floor((constants_1.COLS - this.nextPiece.getCols()) / 2);
-            const y = 0;
-            this.currentPiece = currentPiece_1.default.fromPiece(this.nextPiece, x, y);
-            this.nextPiece = this.getRandomPiece();
-            this.log('NextPiece', this.nextPiece);
-            this.placePiece(this.nextPiece, this.conts.next.x + constants_1.MARGIN, this.conts.next.y + (constants_1.MARGIN * 2));
-            return this.currentPiece;
         }
         px(gridCoord) {
             return this.gridSize * gridCoord;
@@ -884,12 +884,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         drawOutlilnes() {
-            const { board, title, info, next, score, } = this.conts;
+            const { board, title, next, score, } = this.conts;
             this.ctx.strokeStyle = '#000';
             this.ctx.lineWidth = constants_1.PX;
             this.ctx.strokeRect(this.px(board.x), this.px(board.y), this.px(board.width), this.px(board.height));
             this.ctx.strokeRect(this.px(title.x), this.px(title.y), this.px(title.width), this.px(title.height));
-            this.ctx.strokeRect(this.px(info.x), this.px(info.y), this.px(info.width), this.px(info.height));
             this.ctx.strokeRect(this.px(next.x), this.px(next.y), this.px(next.width), this.px(next.height));
             this.ctx.strokeRect(this.px(score.x), this.px(score.y), this.px(score.width), this.px(score.height));
         }
@@ -907,17 +906,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.ctx.clearRect(this.px(this.conts.modal.x) + constants_1.PX, this.px(this.conts.modal.y) + constants_1.PX, this.px(this.conts.modal.width) + (constants_1.PX * 2), this.px(this.conts.modal.height) + (constants_1.PX * 2));
         }
         fitPiece(piece, x, y) {
-            let toX = x;
-            let toY = y;
-            if (piece.getRows() + y >= constants_1.ROWS) {
-                toY = constants_1.ROWS - piece.getRows();
-            }
-            if (piece.getCols() + x >= constants_1.COLS) {
-                toX = constants_1.COLS - piece.getCols();
-            }
             return {
-                safeX: toX,
-                safeY: toY,
+                safeX: Math.min(x, Math.max(0, constants_1.COLS - piece.getCols())),
+                safeY: Math.min(y, Math.max(0, constants_1.ROWS - piece.getRows())),
             };
         }
         drawFacets(x, y) {
@@ -955,9 +946,23 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.ctx.globalCompositeOperation = 'source-over';
             return this;
         }
-        drawPieceOnBoard(piece, x, y) {
-            const { safeX, safeY } = this.fitPiece(piece, x, y);
+        drawPieceOnBoard(piece) {
+            const { safeX, safeY } = this.fitPiece(piece, piece.getX(), piece.getY());
             this.placePiece(piece, this.boardOffset('x', safeX), this.boardOffset('y', safeY));
+            return this;
+        }
+        initializePiece() {
+            let piece = this.nextPiece;
+            if (!piece) {
+                this.currentPiece = currentPiece_1.default.fromPiece(this.getRandomPiece(), 0, 0);
+            }
+            else {
+                this.currentPiece = currentPiece_1.default.fromPiece(piece, 0, 0);
+            }
+            this.nextPiece = this.getRandomPiece();
+            const x = Math.floor((constants_1.COLS - this.currentPiece.getCols()) / 2);
+            this.currentPiece.setX(x);
+            this.pieceTime = Date.now();
             return this;
         }
         placePiece(piece, x, y) {
@@ -977,6 +982,17 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 });
             });
             return this;
+        }
+        fillSquare(x, y) {
+            if (this.bucket[y][x]) {
+                const dim = this.px(1);
+                const pX = this.px(x);
+                const pY = this.px(y);
+                this.ctx.fillStyle = `${this.bucket[y][x]}`;
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.fillRect(pX, pY, dim, dim);
+                this.drawFacets(pX, pY);
+            }
         }
         drawLetter(letter, x, y, color = '#000') {
             const startX = this.px(x);
@@ -1012,14 +1028,27 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         clearGameBoard() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
-        addPieceToBucket(piece, x, y) {
+        dropCurrentPiece(hardDrop) {
             // TODO
+        }
+        addPieceToBucket(piece, x, y) {
+            for (let bX = 0; bX < piece.getCols(); bX++) {
+                for (let bY = 0; bY < piece.getRows(); bY++) {
+                    if (!this.bucket[y + bY][x + bX]) {
+                        this.bucket[y + bY][x + bX] = piece.getColor();
+                    }
+                }
+            }
         }
         clearBucketRectangle() {
             this.ctx.clearRect(this.px(this.conts.board.x) + constants_1.PX, this.px(this.conts.board.y) + constants_1.PX, this.px(this.conts.board.width) - (constants_1.PX * 2), this.px(this.conts.board.height) - (constants_1.PX * 2));
         }
         drawBucket() {
-            // TODO
+            for (let y = 0; y < this.bucket.length; y++) {
+                for (let x = 0; x < this.bucket[y].length; x++) {
+                    this.fillSquare(x, y);
+                }
+            }
         }
         detectCollision(piece, x, y) {
             // TODO
@@ -1029,6 +1058,13 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         clearRow(y) {
             // TODO
+        }
+        drawCurrentPiece() {
+            this.drawPieceOnBoard(this.currentPiece);
+        }
+        drawNextPiece() {
+            const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
+            this.placePiece(this.nextPiece, nextX, this.conts.next.y + (constants_1.MARGIN * 2));
         }
         setScore(score) {
             this.log('SetScore', score);
@@ -1042,7 +1078,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         loop(time) {
             const currentTime = Date.now();
-            this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
+            // this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
             const handler = this.loopHandlers[this.gameState];
             if (handler) {
                 handler(currentTime);
@@ -1072,7 +1108,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.drawGrid();
             this.drawOutlilnes();
             this.setGameText();
-            // TODO game mechanics
+            this.drawCurrentPiece();
+            this.drawNextPiece();
+            this.drawBucket();
         }
         loopPaused(time) {
             this.drawModal();
@@ -1156,6 +1194,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 this.startTime = this.startTime + (Date.now() - this.pauseTime);
                 this.pauseTime = null;
             }
+            this.initializePiece();
             this.setGameState(constants_1.GAME_STATE_STARTED);
         }
         pauseGame() {
@@ -1187,5 +1226,55 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
     }
     exports.default = Gregtris;
+});
+define("rules", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.MiliSecondsPerDrop = exports.Speeds = exports.RULE_ROW_CLEAR_DURATION = exports.RULE_SOFT_DROP_MULTIPLIER = exports.RULE_LOCK_DOWN_DELAY = void 0;
+    exports.RULE_LOCK_DOWN_DELAY = 0.5;
+    exports.RULE_SOFT_DROP_MULTIPLIER = 2;
+    exports.RULE_ROW_CLEAR_DURATION = 0.5;
+    exports.Speeds = {
+        1: 0.01667,
+        2: 0.021017,
+        3: 0.026977,
+        4: 0.035256,
+        5: 0.04693,
+        6: 0.06361,
+        7: 0.0879,
+        8: 0.1236,
+        9: 0.1775,
+        10: 0.2598,
+        11: 0.388,
+        12: 0.59,
+        13: 0.92,
+        14: 1.46,
+        15: 2.36,
+    };
+    // SCORING
+    // Single 	100 × level
+    // Double 	300 × level
+    // Triple 	500 × level
+    // Tetris 	800 × level; difficult
+    // T-Spin Mini no lines 	100 × level
+    // T-Spin no lines 	400 × level
+    // T-Spin Mini Single 	200 × level; difficult
+    // T-Spin Single 	800 × level; difficult
+    // T-Spin Mini Double (if present) 	400 × level; difficult
+    // T-Spin Double 	1200 × level; difficult
+    // T-Spin Triple 	1600 × level; difficult
+    // Back-to-Back difficult line clears 	Action score × 1.5 (excluding soft drop and hard drop)
+    // Combo 	50 × combo count × level
+    // Soft drop 	1 per cell
+    // Hard drop 	2 per cell 
+    exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * 1000);
+    const Rules = {
+        Speeds: exports.Speeds,
+        MiliSecondsPerDrop: exports.MiliSecondsPerDrop,
+        LOCK_DOWN_DELAY: exports.RULE_LOCK_DOWN_DELAY,
+        ROW_CLEAR_DURATION: exports.RULE_ROW_CLEAR_DURATION,
+        SOFT_DROP_MULTIPLIER: exports.RULE_SOFT_DROP_MULTIPLIER,
+    };
+    exports.default = Rules;
 });
 //# sourceMappingURL=gregtris.js.map
