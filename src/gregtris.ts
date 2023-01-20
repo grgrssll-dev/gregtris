@@ -64,7 +64,7 @@ export default class Gregtris {
     };
 
     private killed = false;
-    private level = 1;
+    private level = 0;
     private linesCleared = 0;
     private currentScore = 0;
     private highScore = 0;

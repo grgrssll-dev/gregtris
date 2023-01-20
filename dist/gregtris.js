@@ -687,10 +687,10 @@ define("rules", ["require", "exports"], function (require, exports) {
     };
     exports.Scoring = {
         line: {
-            1: (level) => 40 * level,
-            2: (level) => 100 * level,
-            3: (level) => 300 * level,
-            4: (level) => 1200 * level,
+            1: (level) => 40 * (level + 1),
+            2: (level) => 100 * (level + 1),
+            3: (level) => 300 * (level + 1),
+            4: (level) => 1200 * (level + 1),
         }
     };
     exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * 1000);
@@ -730,7 +730,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 modal: { x: 5, y: 6, width: 10, height: 12 },
             };
             this.killed = false;
-            this.level = 1;
+            this.level = 0;
             this.linesCleared = 0;
             this.currentScore = 0;
             this.highScore = 0;

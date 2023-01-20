@@ -23,10 +23,10 @@ export const Speeds = {
 
 export const Scoring: Record<string, Record<number, (n: number) => number>> = {
     line: {
-        1: (level: number):number => 40 * level,
-        2: (level: number):number => 100 * level,
-        3: (level: number):number => 300 * level,
-        4: (level: number):number => 1200 * level,
+        1: (level: number):number => 40 * (level + 1),
+        2: (level: number):number => 100 * (level + 1),
+        3: (level: number):number => 300 * (level + 1),
+        4: (level: number):number => 1200 * (level + 1),
     } as Record<number, (n: number) => number>
 };
 
