@@ -1078,6 +1078,22 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         clearGameBoard() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
+        setLevel(level) {
+            if (this.level !== level) {
+                this.log('SetLevel', level);
+            }
+            this.level = level;
+        }
+        incrementLines(lines) {
+            let scoreIncrease = 0;
+            this.linesCleared = this.linesCleared + lines;
+            this.setLevel(Math.floor(this.linesCleared / rules_1.default.LINES_LEVEL_CHANGE));
+            if (rules_1.default.Scoring.line[lines]) {
+                scoreIncrease = rules_1.default.Scoring.line[lines](this.level);
+                this.incrementScore(scoreIncrease);
+            }
+            this.log('LinesCleared', lines, ', total', this.linesCleared, ', score increase', scoreIncrease);
+        }
         dropCurrentPiece(hardDrop) {
             // TODO
         }
@@ -1099,6 +1115,23 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     this.fillSquare(x, y);
                 }
             }
+        }
+        drawCurrentPiece() {
+            this.drawPieceOnBoard(this.currentPiece);
+        }
+        drawNextPiece() {
+            const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
+            this.placePiece(this.nextPiece, nextX, this.conts.next.y + (constants_1.MARGIN * 2));
+        }
+        setScore(score) {
+            this.log('SetScore', score);
+            this.currentScore = score;
+            if (this.currentScore > this.highScore) {
+                this.isNewHighScore = true;
+            }
+        }
+        incrementScore(scoreInc) {
+            this.setScore(this.currentScore + scoreInc);
         }
         detectCollision(piece, x, y) {
             let collides = false;
@@ -1164,6 +1197,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     fullRows.push(y);
                 }
             }
+            this.log('RowsCleared', fullRows.length);
             return fullRows;
         }
         clearRow(y) {
@@ -1173,31 +1207,15 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     return;
                 }
             }
-            this.bucket.splice(2, 1);
+            this.bucket.splice(y, 1);
             const newRow = [];
             for (let i = 0; i < constants_1.COLS; i++) {
                 newRow.push('');
             }
             this.bucket.unshift(newRow);
         }
-        drawCurrentPiece() {
-            this.drawPieceOnBoard(this.currentPiece);
-        }
-        drawNextPiece() {
-            const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
-            this.placePiece(this.nextPiece, nextX, this.conts.next.y + (constants_1.MARGIN * 2));
-        }
-        setScore(score) {
-            this.log('SetScore', score);
-            this.currentScore = score;
-            if (this.currentScore > this.highScore) {
-                this.isNewHighScore = true;
-            }
-        }
-        incrementScore(scoreInc) {
-            this.setScore(this.currentScore + scoreInc);
-        }
         calculateDrop(time) {
+            // TODO rework this
             let dropped = false;
             const now = Date.now();
             const diff = now - time;

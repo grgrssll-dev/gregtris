@@ -499,6 +499,24 @@ export default class Gregtris {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    private setLevel(level: number) {
+        if (this.level !== level) {
+            this.log('SetLevel', level);
+        }
+        this.level = level;
+    }
+
+    private incrementLines(lines: number) {
+        let scoreIncrease = 0;
+        this.linesCleared = this.linesCleared + lines;
+        this.setLevel(Math.floor(this.linesCleared / Rules.LINES_LEVEL_CHANGE));
+        if (Rules.Scoring.line[lines]) {
+            scoreIncrease = Rules.Scoring.line[lines](this.level);
+            this.incrementScore(scoreIncrease);
+        }
+        this.log('LinesCleared', lines, ', total', this.linesCleared, ', score increase', scoreIncrease);
+    }
+
     private dropCurrentPiece(hardDrop: boolean) {
         // TODO
     }
@@ -528,6 +546,27 @@ export default class Gregtris {
                 this.fillSquare(x, y);
             }
         }
+    }
+
+    private drawCurrentPiece() {
+        this.drawPieceOnBoard(this.currentPiece);
+    }
+
+    private drawNextPiece() {
+        const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
+        this.placePiece(this.nextPiece, nextX, this.conts.next.y + (MARGIN * 2));
+    }
+
+    private setScore(score: number) {
+        this.log('SetScore', score);
+        this.currentScore = score;
+        if (this.currentScore > this.highScore) {
+            this.isNewHighScore = true;
+        }
+    }
+
+    private incrementScore(scoreInc: number) {
+        this.setScore(this.currentScore + scoreInc);
     }
 
     private detectCollision(piece: Piece, x: number, y: number): boolean {
@@ -601,6 +640,7 @@ export default class Gregtris {
                 fullRows.push(y);
             }
         }
+        this.log('RowsCleared', fullRows.length);
         return fullRows;
     }
 
@@ -611,7 +651,7 @@ export default class Gregtris {
                 return;
             }
         }
-        this.bucket.splice(2, 1);
+        this.bucket.splice(y, 1);
         const newRow = [];
         for (let i = 0; i < COLS; i++) {
             newRow.push('');
@@ -619,28 +659,8 @@ export default class Gregtris {
         this.bucket.unshift(newRow);
     }
 
-    private drawCurrentPiece() {
-        this.drawPieceOnBoard(this.currentPiece);
-    }
-
-    private drawNextPiece() {
-        const nextX = this.conts.next.x + Math.floor((this.conts.next.width - this.nextPiece.getCols()) / 2);
-        this.placePiece(this.nextPiece, nextX, this.conts.next.y + (MARGIN * 2));
-    }
-
-    private setScore(score: number) {
-        this.log('SetScore', score);
-        this.currentScore = score;
-        if (this.currentScore > this.highScore) {
-            this.isNewHighScore = true;
-        }
-    }
-
-    private incrementScore(scoreInc: number) {
-        this.setScore(this.currentScore + scoreInc);
-    }
-
     private calculateDrop(time: number): boolean {
+        // TODO rework this
         let dropped = false;
         const now = Date.now();
         const diff = now - time;

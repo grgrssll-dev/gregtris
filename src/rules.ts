@@ -21,14 +21,14 @@ export const Speeds = {
     15: 2.36,
 };
 
-export const Scoring = {
+export const Scoring: Record<string, Record<number, (n: number) => number>> = {
     line: {
-        1: (level: number) => 40 * level,
-        2: (level: number) => 100 * level,
-        3: (level: number) => 300 * level,
-        4: (level: number) => 1200 * level,
-    }
-}
+        1: (level: number):number => 40 * level,
+        2: (level: number):number => 100 * level,
+        3: (level: number):number => 300 * level,
+        4: (level: number):number => 1200 * level,
+    } as Record<number, (n: number) => number>
+};
 
 export const MiliSecondsPerDrop = Object.values(Speeds).map((s) => (1 / s) * 1000);
 
