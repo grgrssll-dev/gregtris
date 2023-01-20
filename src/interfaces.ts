@@ -14,3 +14,10 @@ export type Container = {
     width: number;
     height: number;
 };
+
+export type Color = {
+    r: number,
+    g: number,
+    b: number,
+    a: number,
+};

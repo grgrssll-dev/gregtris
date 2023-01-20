@@ -387,10 +387,6 @@ define("constants", ["require", "exports"], function (require, exports) {
     };
     exports.default = Constants;
 });
-define("container", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-});
 define("directions", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -615,7 +611,7 @@ define("gamePieces", ["require", "exports", "piece"], function (require, exports
 define("utils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.bucketRowFull = exports.rand = void 0;
+    exports.constructColor = exports.deconstructColor = exports.bucketRowFull = exports.rand = void 0;
     function rand(min, max) {
         return min + (Math.round(Number.MAX_SAFE_INTEGER * Math.random()) % (max - min + 1));
     }
@@ -625,6 +621,21 @@ define("utils", ["require", "exports"], function (require, exports) {
         return a.every(checker);
     }
     exports.bucketRowFull = bucketRowFull;
+    function deconstructColor(rgba) {
+        const vals = rgba.replace('rgba(', '').replace(')', '');
+        const [r, g, b, a] = `${vals}`.trim().split(',').map((v) => `${v || ''}`.trim());
+        return {
+            r: Math.max(0, Math.min(parseInt(r, 10), 255)),
+            g: Math.max(0, Math.min(parseInt(g, 10), 255)),
+            b: Math.max(0, Math.min(parseInt(b, 10), 255)),
+            a: Math.max(0, Math.min(parseFloat(a), 1)),
+        };
+    }
+    exports.deconstructColor = deconstructColor;
+    function constructColor(color) {
+        return `rgba(${color.r},${color.g},${color.b},${color.a})`;
+    }
+    exports.constructColor = constructColor;
 });
 define("keys", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -1007,32 +1018,32 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 safeY: Math.min(y, Math.max(0, constants_1.ROWS - piece.getRows())),
             };
         }
-        drawFacets(x, y) {
+        drawFacets(x, y, tween = 1) {
             const dim = this.px(1);
             const shadeW = Math.round(dim / constants_1.FACET_DIVISOR);
             this.ctx.globalCompositeOperation = 'screen';
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${0.6 * tween})`;
             this.ctx.beginPath();
             this.ctx.moveTo(x, y);
             this.ctx.lineTo(x + shadeW, y + shadeW);
             this.ctx.lineTo(x + dim - shadeW, y + shadeW);
             this.ctx.lineTo(x + dim, y);
             this.ctx.fill();
-            this.ctx.fillStyle = 'rgba(127, 127, 127, 0.4)';
+            this.ctx.fillStyle = `rgba(127, 127, 127, ${0.4 * tween})`;
             this.ctx.beginPath();
             this.ctx.moveTo(x + dim, y);
             this.ctx.lineTo(x + dim - shadeW, y + shadeW);
             this.ctx.lineTo(x + dim - shadeW, y + dim - shadeW);
             this.ctx.lineTo(x + dim, y + dim);
             this.ctx.fill();
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${0.5 * tween})`;
             this.ctx.beginPath();
             this.ctx.moveTo(x, y + dim);
             this.ctx.lineTo(x + shadeW, y + dim - shadeW);
             this.ctx.lineTo(x + dim - shadeW, y + dim - shadeW);
             this.ctx.lineTo(x + dim, y + dim);
             this.ctx.fill();
-            this.ctx.fillStyle = 'rgba(127, 127, 127, 0.4)';
+            this.ctx.fillStyle = `rgba(127, 127, 127, ${0.4 * tween})`;
             this.ctx.beginPath();
             this.ctx.moveTo(x, y);
             this.ctx.lineTo(x + shadeW, y + shadeW);
@@ -1079,16 +1090,17 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             });
             return this;
         }
-        fillSquare(x, y, opacity = 1) {
+        fillSquare(x, y, tween = 1) {
             if (this.bucket[y][x]) {
                 const dim = this.px(1);
                 const pX = this.px(x + this.conts.board.x);
                 const pY = this.px(y + this.conts.board.y);
-                this.ctx.fillStyle = `${this.bucket[y][x]}`;
-                this.ctx.globalAlpha = opacity;
+                const fillColor = (0, utils_1.deconstructColor)(this.bucket[y][x]);
+                const newFillColor = (0, utils_1.constructColor)(Object.assign(Object.assign({}, fillColor), { a: fillColor.a * tween }));
+                this.ctx.fillStyle = newFillColor;
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.fillRect(pX, pY, dim, dim);
-                this.drawFacets(pX, pY);
+                this.drawFacets(pX, pY, tween);
             }
         }
         drawLetter(letter, x, y, color = '#000') {
@@ -1299,7 +1311,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.setGameText();
             this.drawCurrentPiece();
             this.drawNextPiece();
-            this.drawBucket(this.rowsToClear, Math.min(0, Math.max(tween, 1)));
+            this.drawBucket(this.rowsToClear, Math.max(0, Math.min(tween, 1)));
         }
         calculateDrop(time) {
             let dropped = constants_1.DROP_STATE_WAITING;
@@ -1375,8 +1387,10 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 this.log('DROP STATE', dropState);
                 if (dropState === constants_1.DROP_STATE_STOPPED) {
                     this.rowsToClear = this.detectFullRows();
-                    this.incrementLines(this.rowsToClear.length);
-                    this.clearRowTime = Date.now();
+                    if (this.rowsToClear.length) {
+                        this.incrementLines(this.rowsToClear.length);
+                        this.clearRowTime = Date.now();
+                    }
                     return;
                 }
                 else if (dropState === constants_1.DROP_STATE_GAME_OVER) {

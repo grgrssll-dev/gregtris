@@ -1,16 +1,14 @@
-import { rand, bucketRowFull } from './utils';
+import { rand, bucketRowFull, deconstructColor, constructColor } from './utils';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import Piece from './piece';
 import CurrentPiece from './currentPiece';
-import { Container, CoordType, GameState, Coord, DropState } from './interfaces';
+import { Container, CoordType, GameState, DropState } from './interfaces';
 import gamePieces from './gamePieces';
 import { 
     Direction,
     MovementDirection,
     directionsArray,
-    DIR_UP,
     DIR_RIGHT,
-    DIR_DOWN,
     DIR_LEFT,
 } from './directions';
 import {
@@ -416,11 +414,11 @@ export default class Gregtris {
         };
     }
 
-    private drawFacets(x: number, y: number) {
+    private drawFacets(x: number, y: number, tween: number = 1) {
         const dim = this.px(1);
         const shadeW = Math.round(dim / FACET_DIVISOR);
         this.ctx.globalCompositeOperation = 'screen';
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${0.6 * tween})`;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
         this.ctx.lineTo(x + shadeW, y + shadeW);
@@ -428,7 +426,7 @@ export default class Gregtris {
         this.ctx.lineTo(x + dim, y);
         this.ctx.fill();
         
-        this.ctx.fillStyle = 'rgba(127, 127, 127, 0.4)';
+        this.ctx.fillStyle = `rgba(127, 127, 127, ${0.4 * tween})`;
         this.ctx.beginPath();
         this.ctx.moveTo(x + dim, y);
         this.ctx.lineTo(x + dim - shadeW, y + shadeW);
@@ -436,7 +434,7 @@ export default class Gregtris {
         this.ctx.lineTo(x + dim, y + dim);
         this.ctx.fill();
         
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${0.5 * tween})`;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y + dim);
         this.ctx.lineTo(x + shadeW, y + dim - shadeW);
@@ -444,7 +442,7 @@ export default class Gregtris {
         this.ctx.lineTo(x + dim, y + dim);
         this.ctx.fill();
         
-        this.ctx.fillStyle = 'rgba(127, 127, 127, 0.4)';
+        this.ctx.fillStyle = `rgba(127, 127, 127, ${0.4 * tween})`;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
         this.ctx.lineTo(x + shadeW, y + shadeW);
@@ -495,16 +493,20 @@ export default class Gregtris {
         return this;
     }
 
-    private fillSquare(x: number, y: number, opacity: number = 1) {
+    private fillSquare(x: number, y: number, tween: number = 1) {
         if (this.bucket[y][x]) {
             const dim = this.px(1);
             const pX = this.px(x + this.conts.board.x);
             const pY = this.px(y + this.conts.board.y);
-            this.ctx.fillStyle = `${this.bucket[y][x]}`;
-            this.ctx.globalAlpha = opacity;
+            const fillColor = deconstructColor(this.bucket[y][x]);
+            const newFillColor = constructColor({
+                ...fillColor,
+                a: fillColor.a * tween,
+            });
+            this.ctx.fillStyle = newFillColor;
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.fillRect(pX, pY, dim, dim);
-            this.drawFacets(pX, pY);
+            this.drawFacets(pX, pY, tween);
         }
     }
 
@@ -745,7 +747,7 @@ export default class Gregtris {
         this.setGameText();
         this.drawCurrentPiece();
         this.drawNextPiece();
-        this.drawBucket(this.rowsToClear, Math.min(0, Math.max(tween, 1)));
+        this.drawBucket(this.rowsToClear, Math.max(0, Math.min(tween, 1)));
     }
 
     private calculateDrop(time: number): DropState {
@@ -817,8 +819,10 @@ export default class Gregtris {
             this.log('DROP STATE', dropState);
             if (dropState === DROP_STATE_STOPPED) {
                 this.rowsToClear = this.detectFullRows();
-                this.incrementLines(this.rowsToClear.length);
-                this.clearRowTime = Date.now();
+                if (this.rowsToClear.length) {
+                    this.incrementLines(this.rowsToClear.length);
+                    this.clearRowTime = Date.now();
+                }
                 return;
             } else if (dropState === DROP_STATE_GAME_OVER) {
                 this.endGame();
