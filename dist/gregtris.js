@@ -1325,6 +1325,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     dropped = constants_1.DROP_STATE_DROPPING;
                 }
                 else {
+                    if (this.bucket[0][Math.floor(constants_1.ROWS / 2)]) {
+                        this.endGame();
+                    }
                     this.log('Dropped');
                     const canAdd = this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                     this.initializePiece();

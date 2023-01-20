@@ -771,6 +771,9 @@ export default class Gregtris {
                 this.dropLockTime = null;
                 dropped = DROP_STATE_DROPPING;
             } else {
+                if (this.bucket[0][Math.floor(ROWS / 2)]) {
+                    this.endGame();
+                }
                 this.log('Dropped');
                 const canAdd = this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                 this.initializePiece();
