@@ -334,7 +334,7 @@ define("interfaces", ["require", "exports"], function (require, exports) {
 define("constants", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.DROP_STATE_WAITING = exports.DROP_STATE_STOPPED = exports.DROP_STATE_DROPPING = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
+    exports.DROP_STATE_GAME_OVER = exports.DROP_STATE_WAITING = exports.DROP_STATE_STOPPED = exports.DROP_STATE_DROPPING = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
     exports.ROWS = 20;
     exports.COLS = 10;
     exports.GAME_ROWS = 24;
@@ -358,6 +358,7 @@ define("constants", ["require", "exports"], function (require, exports) {
     exports.DROP_STATE_DROPPING = 'DROPPING';
     exports.DROP_STATE_STOPPED = 'STOPPED';
     exports.DROP_STATE_WAITING = 'WAITING';
+    exports.DROP_STATE_GAME_OVER = 'GAME_OVER';
     const Constants = {
         ROWS: exports.ROWS,
         COLS: exports.COLS,
@@ -382,6 +383,7 @@ define("constants", ["require", "exports"], function (require, exports) {
         DROP_STATE_DROPPING: exports.DROP_STATE_DROPPING,
         DROP_STATE_STOPPED: exports.DROP_STATE_STOPPED,
         DROP_STATE_WAITING: exports.DROP_STATE_WAITING,
+        DROP_STATE_GAME_OVER: exports.DROP_STATE_GAME_OVER,
     };
     exports.default = Constants;
 });
@@ -670,14 +672,14 @@ define("keys", ["require", "exports"], function (require, exports) {
 define("rules", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Scoring = exports.MiliSecondsPerDrop = exports.Speeds = exports.RULE_LINES_LEVEL_CHANGE = exports.RULE_SOFT_DROP_MULTIPLIER = exports.Durations = exports.DURATION_ROW_CLEAR_DURATION = exports.DURATION_LOCK_DOWN_DURATION = void 0;
+    exports.Scoring = exports.SOFT_DROP_SPEED = exports.MiliSecondsPerDrop = exports.Speeds = exports.RULE_LINES_LEVEL_CHANGE = exports.Durations = exports.DURATION_ROW_CLEAR_DURATION = exports.DURATION_LOCK_DOWN_DURATION = void 0;
+    const frameRateMultiplier = 16.66666;
     exports.DURATION_LOCK_DOWN_DURATION = 500;
-    exports.DURATION_ROW_CLEAR_DURATION = 500;
+    exports.DURATION_ROW_CLEAR_DURATION = 1000;
     exports.Durations = {
         LOCK_DOWN_DURATION: exports.DURATION_LOCK_DOWN_DURATION,
         ROW_CLEAR_DURATION: exports.DURATION_ROW_CLEAR_DURATION
     };
-    exports.RULE_SOFT_DROP_MULTIPLIER = 20;
     exports.RULE_LINES_LEVEL_CHANGE = 10;
     exports.Speeds = {
         1: 0.01667,
@@ -696,7 +698,8 @@ define("rules", ["require", "exports"], function (require, exports) {
         14: 1.46,
         15: 2.36,
     };
-    exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * 16.666);
+    exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * frameRateMultiplier);
+    exports.SOFT_DROP_SPEED = (exports.MiliSecondsPerDrop[1]) / 20;
     exports.Scoring = {
         line: {
             1: (level) => 40 * (level + 1),
@@ -709,8 +712,9 @@ define("rules", ["require", "exports"], function (require, exports) {
         Scoring: exports.Scoring,
         Speeds: exports.Speeds,
         MiliSecondsPerDrop: exports.MiliSecondsPerDrop,
+        MiliSecondsSoftDrop: exports.SOFT_DROP_SPEED,
+        MiliSecondsHardDrop: 1,
         Durations: exports.Durations,
-        SOFT_DROP_MULTIPLIER: exports.RULE_SOFT_DROP_MULTIPLIER,
         LINES_LEVEL_CHANGE: exports.RULE_LINES_LEVEL_CHANGE,
     };
     exports.default = Rules;
@@ -745,6 +749,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.currentScore = 0;
             this.highScore = 0;
             this.isNewHighScore = false;
+            this.isHardDrop = false;
+            this.isSoftDrop = false;
             this.gameState = constants_1.GAME_STATE_LOADING;
             this.previousTime = 0;
             this.beginTime = null;
@@ -755,8 +761,10 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.pieceTime = null;
             this.dropLockTime = null;
             this.clearRowTime = null;
+            this.rowsToClear = [];
             this.loopCounter = 0;
-            this.boundKeyListener = this.keyListener.bind(this);
+            this.boundKeyDownListener = this.keyDownListener.bind(this);
+            this.boundKeyUpListener = this.keyUpListener.bind(this);
             this.boundLoop = this.loop.bind(this);
             this.loopHandlers = {
                 [constants_1.GAME_STATE_BEFORE_START]: this.loopBeforeStart.bind(this),
@@ -808,14 +816,33 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 this.highScore = storageHighScore;
             }
             this.nextPiece = this.getRandomPiece();
-            window.addEventListener('keydown', this.boundKeyListener);
+            window.addEventListener('keydown', this.boundKeyDownListener);
+            window.addEventListener('keyup', this.boundKeyUpListener);
         }
         log(...msg) {
             if (this.opts.debug === true) {
                 console.log('[Gregtris]', ...msg);
             }
         }
-        keyListener(e) {
+        keyUpListener(e) {
+            const { code, key, metaKey, shiftKey, altKey, ctrlKey, } = e;
+            const keyCode = code || key;
+            const modifierKey = metaKey || shiftKey || altKey || ctrlKey;
+            let handled = false;
+            if (!modifierKey) {
+                if (this.isStarted()) {
+                    if (keys_1.default.DROP.includes(keyCode)) {
+                        handled = true;
+                        this.clearDropPieceModifier();
+                    }
+                }
+            }
+            if (handled) {
+                this.log('KeyEvent', keyCode);
+                e.preventDefault();
+            }
+        }
+        keyDownListener(e) {
             const { code, key, metaKey, shiftKey, altKey, ctrlKey, } = e;
             const keyCode = code || key;
             const modifierKey = metaKey || shiftKey || altKey || ctrlKey;
@@ -836,11 +863,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     }
                     if (keys_1.default.DROP.includes(keyCode)) {
                         handled = true;
-                        this.dropCurrentPiece(false);
+                        this.setDropPieceModifier(false);
                     }
                     if (keys_1.default.HARD_DROP.includes(keyCode)) {
                         handled = true;
-                        this.dropCurrentPiece(true);
+                        this.setDropPieceModifier(true);
                     }
                     if (keys_1.default.PAUSE.includes(keyCode)) {
                         handled = true;
@@ -872,6 +899,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         moveCurrentPiece(dir) {
+            if (this.isHardDrop) {
+                return;
+            }
             let newX = this.currentPiece.getX();
             switch (dir) {
                 case directions_4.DIR_LEFT: {
@@ -892,6 +922,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.currentPiece.setX(newX);
         }
         rotateCurrentPiece() {
+            if (this.isHardDrop) {
+                return;
+            }
             this.currentPiece = this.currentPiece.clone(directions_4.DIR_RIGHT);
         }
         randDirection() {
@@ -1046,13 +1079,13 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             });
             return this;
         }
-        fillSquare(x, y) {
+        fillSquare(x, y, opacity = 1) {
             if (this.bucket[y][x]) {
-                // this.log('FILL BUCKET', x, y, this.bucket[y][x]);
                 const dim = this.px(1);
                 const pX = this.px(x + this.conts.board.x);
                 const pY = this.px(y + this.conts.board.y);
                 this.ctx.fillStyle = `${this.bucket[y][x]}`;
+                this.ctx.globalAlpha = opacity;
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.fillRect(pX, pY, dim, dim);
                 this.drawFacets(pX, pY);
@@ -1108,13 +1141,24 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
             this.log('LinesCleared', lines, ', total', this.linesCleared, ', score increase', scoreIncrease);
         }
-        dropCurrentPiece(hardDrop) {
-            // TODO
+        setDropPieceModifier(hardDrop) {
+            if (!this.isHardDrop) {
+                if (hardDrop) {
+                    this.isHardDrop = true;
+                }
+                else {
+                    this.isSoftDrop = true;
+                }
+            }
+        }
+        clearDropPieceModifier(force = false) {
+            if (force || !this.isHardDrop) {
+                this.isHardDrop = false;
+                this.isSoftDrop = false;
+            }
         }
         addPieceToBucket(piece, x, y) {
             this.log('AddingPiece', piece.getMatrix(), x, y);
-            // this.log('BUCKET BEFORE')
-            // this.logBucket();
             const matrix = piece.getMatrix();
             for (let bX = 0; bX < piece.getCols(); bX++) {
                 for (let bY = 0; bY < piece.getRows(); bY++) {
@@ -1123,8 +1167,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     }
                 }
             }
-            // this.log('BUCKET AFTER')
-            // this.logBucket();
         }
         logBucket() {
             this.bucket.forEach((r, i) => this.log(`${i}`.padStart(2, '0'), '|', r.map(c => +(!!c)).join(',')));
@@ -1132,10 +1174,12 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         clearBucketRectangle() {
             this.ctx.clearRect(this.px(this.conts.board.x) + constants_1.PX, this.px(this.conts.board.y) + constants_1.PX, this.px(this.conts.board.width) - (constants_1.PX * 2), this.px(this.conts.board.height) - (constants_1.PX * 2));
         }
-        drawBucket() {
+        drawBucket(rows = [], tween = 1) {
+            rows.length ? this.log('DrawBucket', rows, tween) : null;
             for (let y = 0; y < this.bucket.length; y++) {
+                const isAlphaRow = rows.includes(y);
                 for (let x = 0; x < this.bucket[y].length; x++) {
-                    this.fillSquare(x, y);
+                    this.fillSquare(x, y, isAlphaRow ? 1 - tween : 1);
                 }
             }
         }
@@ -1204,7 +1248,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     fullRows.push(y);
                 }
             }
-            this.log('RowsCleared', fullRows.length);
+            this.log('RowsCleared', fullRows.length, fullRows);
             return fullRows;
         }
         clearRow(y) {
@@ -1247,14 +1291,28 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('GREGTRIS', 6, 7, '#092');
             this.writeWord('LOADING…', 6, 9, '#f20');
         }
-        clearRowAnimationTween(i) {
-            // TODO
+        clearRowAnimationTween(tween) {
+            this.log('ClearRowAnim', tween, this.rowsToClear.join(','));
+            this.clearGameBoard();
+            this.drawGrid();
+            this.drawOutlilnes();
+            this.setGameText();
+            this.drawCurrentPiece();
+            this.drawNextPiece();
+            this.drawBucket(this.rowsToClear, Math.min(0, Math.max(tween, 1)));
         }
         calculateDrop(time) {
             let dropped = constants_1.DROP_STATE_WAITING;
             const diff = time - (this.pieceTime || 0);
             const showLog = this.loopCounter % 30 === 0;
-            const dropTimer = rules_1.default.MiliSecondsPerDrop[this.level];
+            let dropSpeed = rules_1.default.MiliSecondsPerDrop[this.level];
+            if (this.isSoftDrop) {
+                dropSpeed = rules_1.default.MiliSecondsSoftDrop;
+            }
+            if (this.isHardDrop) {
+                dropSpeed = rules_1.default.MiliSecondsHardDrop;
+            }
+            const dropTimer = dropSpeed;
             if (showLog) {
                 this.log('calcDrop', diff, '|', dropTimer, '|', Math.floor(diff / 1000), '|', Math.floor(dropTimer / 1000));
             }
@@ -1268,10 +1326,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 }
                 else {
                     this.log('Dropped');
-                    this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                    const canAdd = this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                     this.initializePiece();
-                    this.dropLockTime = time;
+                    this.clearDropPieceModifier(true);
                     dropped = constants_1.DROP_STATE_STOPPED;
+                    this.dropLockTime = time;
                 }
             }
             else {
@@ -1299,6 +1358,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 if (crDiff > rules_1.default.Durations.ROW_CLEAR_DURATION) {
                     this.clearRowTime = null;
                     this.clearRowAnimationTween(1);
+                    this.rowsToClear.forEach((row) => this.clearRow(row));
+                    this.rowsToClear = [];
                     this.pieceTime = Date.now();
                 }
                 else {
@@ -1309,14 +1370,14 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             else if (this.pieceTime) {
                 const dropState = this.calculateDrop(time);
                 this.log('DROP STATE', dropState);
-                if (dropState === constants_1.DROP_STATE_DROPPING) {
-                    // in prog
+                if (dropState === constants_1.DROP_STATE_STOPPED) {
+                    this.rowsToClear = this.detectFullRows();
+                    this.incrementLines(this.rowsToClear.length);
+                    this.clearRowTime = Date.now();
+                    return;
                 }
-                else if (dropState === constants_1.DROP_STATE_STOPPED) {
-                    // dropped
-                }
-                else if (dropState === constants_1.DROP_STATE_WAITING) {
-                    // nothing
+                else if (dropState === constants_1.DROP_STATE_GAME_OVER) {
+                    this.endGame();
                 }
             }
             this.clearGameBoard();

@@ -34,6 +34,7 @@ import {
     DROP_STATE_WAITING,
     DROP_STATE_DROPPING,
     DROP_STATE_STOPPED,
+    DROP_STATE_GAME_OVER,
 } from './constants';
 import Keys from './keys';
 import Rules from './rules';
@@ -72,6 +73,8 @@ export default class Gregtris {
     private currentScore = 0;
     private highScore = 0;
     private isNewHighScore = false;
+    private isHardDrop = false;
+    private isSoftDrop = false;
 
     private currentPiece!: CurrentPiece;
     private nextPiece!: Piece;
@@ -87,10 +90,13 @@ export default class Gregtris {
     private pieceTime: number|null = null;
     private dropLockTime: number|null = null;
     private clearRowTime: number|null = null;
+    
+    private rowsToClear: number[] = [];
 
     private loopCounter = 0;
 
-    private boundKeyListener = this.keyListener.bind(this);
+    private boundKeyDownListener = this.keyDownListener.bind(this);
+    private boundKeyUpListener = this.keyUpListener.bind(this);
     private boundLoop = this.loop.bind(this);
 
     private loopHandlers: Record<GameState, (time: number) => void> = {
@@ -147,7 +153,8 @@ export default class Gregtris {
         }
         this.nextPiece = this.getRandomPiece();
 
-        window.addEventListener('keydown', this.boundKeyListener);
+        window.addEventListener('keydown', this.boundKeyDownListener);
+        window.addEventListener('keyup', this.boundKeyUpListener);
     }
 
     private log(...msg :any[]): void {
@@ -156,7 +163,33 @@ export default class Gregtris {
         }
     }
 
-    private keyListener(e: KeyboardEvent) {
+    private keyUpListener(e: KeyboardEvent) {
+        const {
+            code,
+            key,
+            metaKey,
+            shiftKey,
+            altKey,
+            ctrlKey,
+        } = e;
+        const keyCode = code || key;
+        const modifierKey = metaKey || shiftKey || altKey || ctrlKey;
+        let handled = false;
+        if (!modifierKey) {
+            if (this.isStarted()) {
+                if (Keys.DROP.includes(keyCode)) {
+                    handled = true;
+                    this.clearDropPieceModifier();
+                }
+            }
+        }
+        if (handled) {
+            this.log('KeyEvent', keyCode);
+            e.preventDefault();
+        }
+    }
+
+    private keyDownListener(e: KeyboardEvent) {
         const {
             code,
             key,
@@ -184,11 +217,11 @@ export default class Gregtris {
                 }
                 if (Keys.DROP.includes(keyCode)) {
                     handled = true;
-                    this.dropCurrentPiece(false);
+                    this.setDropPieceModifier(false);
                 }
                 if (Keys.HARD_DROP.includes(keyCode)) {
                     handled = true;
-                    this.dropCurrentPiece(true);
+                    this.setDropPieceModifier(true);
                 }
                 if (Keys.PAUSE.includes(keyCode)) {
                     handled = true;
@@ -220,6 +253,9 @@ export default class Gregtris {
     }
 
     private moveCurrentPiece(dir: MovementDirection) {
+        if (this.isHardDrop) {
+            return;
+        }
         let newX = this.currentPiece.getX();
         switch(dir) {
             case DIR_LEFT: {
@@ -241,6 +277,9 @@ export default class Gregtris {
     }
 
     private rotateCurrentPiece() {
+        if (this.isHardDrop) {
+            return;
+        }
         this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
     }
 
@@ -456,13 +495,13 @@ export default class Gregtris {
         return this;
     }
 
-    private fillSquare(x: number, y: number) {
+    private fillSquare(x: number, y: number, opacity: number = 1) {
         if (this.bucket[y][x]) {
-            // this.log('FILL BUCKET', x, y, this.bucket[y][x]);
             const dim = this.px(1);
             const pX = this.px(x + this.conts.board.x);
             const pY = this.px(y + this.conts.board.y);
             this.ctx.fillStyle = `${this.bucket[y][x]}`;
+            this.ctx.globalAlpha = opacity;
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.fillRect(pX, pY, dim, dim);
             this.drawFacets(pX, pY);
@@ -525,14 +564,24 @@ export default class Gregtris {
         this.log('LinesCleared', lines, ', total', this.linesCleared, ', score increase', scoreIncrease);
     }
 
-    private dropCurrentPiece(hardDrop: boolean) {
-        // TODO
+    private setDropPieceModifier(hardDrop: boolean) {
+        if (!this.isHardDrop) {
+            if (hardDrop) {
+                this.isHardDrop = true;
+            } else {
+                this.isSoftDrop = true;
+            }
+        }
+    }
+    private clearDropPieceModifier(force = false) {
+        if (force || !this.isHardDrop) {
+            this.isHardDrop = false;
+            this.isSoftDrop = false;
+        }
     }
 
     private addPieceToBucket(piece: Piece, x: number, y: number) {
         this.log('AddingPiece', piece.getMatrix(), x, y);
-        // this.log('BUCKET BEFORE')
-        // this.logBucket();
         const matrix = piece.getMatrix();
         for (let bX = 0; bX < piece.getCols(); bX++) {
             for (let bY = 0; bY < piece.getRows(); bY ++) {
@@ -541,8 +590,6 @@ export default class Gregtris {
                 }
             }
         }
-        // this.log('BUCKET AFTER')
-        // this.logBucket();
     }
 
     private logBucket() {
@@ -558,10 +605,12 @@ export default class Gregtris {
         );
     }
 
-    private drawBucket() {
+    private drawBucket(rows: number[] = [], tween: number = 1) {
+        rows.length ? this.log('DrawBucket',rows, tween) : null;
         for (let y = 0; y < this.bucket.length; y++) {
+            const isAlphaRow = rows.includes(y);
             for (let x = 0; x < this.bucket[y].length; x++) {
-                this.fillSquare(x, y,);
+                this.fillSquare(x, y, isAlphaRow ? 1 - tween : 1);
             }
         }
     }
@@ -640,7 +689,7 @@ export default class Gregtris {
                 fullRows.push(y);
             }
         }
-        this.log('RowsCleared', fullRows.length);
+        this.log('RowsCleared', fullRows.length, fullRows);
         return fullRows;
     }
 
@@ -688,15 +737,29 @@ export default class Gregtris {
         this.writeWord('LOADING…', 6, 9, '#f20');
     }
 
-    private clearRowAnimationTween(i: number) {
-        // TODO
+    private clearRowAnimationTween(tween: number) {
+        this.log('ClearRowAnim', tween, this.rowsToClear.join(','));
+        this.clearGameBoard();
+        this.drawGrid();
+        this.drawOutlilnes();
+        this.setGameText();
+        this.drawCurrentPiece();
+        this.drawNextPiece();
+        this.drawBucket(this.rowsToClear, Math.min(0, Math.max(tween, 1)));
     }
 
     private calculateDrop(time: number): DropState {
         let dropped: DropState = DROP_STATE_WAITING;
         const diff = time - (this.pieceTime || 0);
         const showLog = this.loopCounter % 30 === 0;
-        const dropTimer = Rules.MiliSecondsPerDrop[this.level];
+        let dropSpeed = Rules.MiliSecondsPerDrop[this.level];
+        if (this.isSoftDrop) {
+            dropSpeed = Rules.MiliSecondsSoftDrop;
+        }
+        if (this.isHardDrop) {
+            dropSpeed = Rules.MiliSecondsHardDrop;
+        }
+        const dropTimer = dropSpeed;
         if (showLog) {
             this.log('calcDrop', diff, '|', dropTimer, '|', Math.floor(diff / 1000), '|', Math.floor(dropTimer / 1000));
         }
@@ -709,10 +772,11 @@ export default class Gregtris {
                 dropped = DROP_STATE_DROPPING;
             } else {
                 this.log('Dropped');
-                this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                const canAdd = this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                 this.initializePiece();
-                this.dropLockTime = time;
+                this.clearDropPieceModifier(true);
                 dropped = DROP_STATE_STOPPED;
+                this.dropLockTime = time;
             }
         } else {
             if (showLog) {
@@ -738,6 +802,8 @@ export default class Gregtris {
             if (crDiff > Rules.Durations.ROW_CLEAR_DURATION) {
                 this.clearRowTime = null; 
                 this.clearRowAnimationTween(1);
+                this.rowsToClear.forEach((row) => this.clearRow(row));
+                this.rowsToClear = [];
                 this.pieceTime = Date.now();
             } else {
                 this.clearRowAnimationTween(crDiff / Rules.Durations.ROW_CLEAR_DURATION);
@@ -746,12 +812,13 @@ export default class Gregtris {
         } else if (this.pieceTime) {
             const dropState = this.calculateDrop(time);
             this.log('DROP STATE', dropState);
-            if (dropState === DROP_STATE_DROPPING) {
-                // in prog
-            } else if (dropState === DROP_STATE_STOPPED) {
-                // dropped
-            } else if (dropState === DROP_STATE_WAITING) {
-                // nothing
+            if (dropState === DROP_STATE_STOPPED) {
+                this.rowsToClear = this.detectFullRows();
+                this.incrementLines(this.rowsToClear.length);
+                this.clearRowTime = Date.now();
+                return;
+            } else if (dropState === DROP_STATE_GAME_OVER) {
+                this.endGame();
             }
         }
         this.clearGameBoard();
