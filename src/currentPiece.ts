@@ -33,6 +33,7 @@ export default class CurrentPiece extends Piece {
     clone(rotation: Direction = DIR_UP): CurrentPiece {
         super.clone(rotation);
         const newPiece = CurrentPiece.fromPiece(this, this.x, this.y);
+        newPiece.rotate(rotation);
         return newPiece;
     }
 

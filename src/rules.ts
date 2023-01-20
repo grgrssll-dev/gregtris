@@ -1,6 +1,12 @@
-export const RULE_LOCK_DOWN_DELAY = 0.5;
+export const DURATION_LOCK_DOWN_DURATION = 500;
+export const DURATION_ROW_CLEAR_DURATION = 500;
+
+export const Durations: Record<string, number> = {
+    LOCK_DOWN_DURATION: DURATION_LOCK_DOWN_DURATION,
+    ROW_CLEAR_DURATION: DURATION_ROW_CLEAR_DURATION
+};
+
 export const RULE_SOFT_DROP_MULTIPLIER = 20;
-export const RULE_ROW_CLEAR_DURATION = 0.5;
 export const RULE_LINES_LEVEL_CHANGE = 10;
 
 export const Speeds = {
@@ -21,6 +27,8 @@ export const Speeds = {
     15: 2.36,
 };
 
+export const MiliSecondsPerDrop = Object.values(Speeds).map((s) => (1 / s) * 16.666);
+
 export const Scoring: Record<string, Record<number, (n: number) => number>> = {
     line: {
         1: (level: number):number => 40 * (level + 1),
@@ -30,14 +38,11 @@ export const Scoring: Record<string, Record<number, (n: number) => number>> = {
     } as Record<number, (n: number) => number>
 };
 
-export const MiliSecondsPerDrop = Object.values(Speeds).map((s) => (1 / s) * 1000);
-
 const Rules = {
     Scoring,
     Speeds,
     MiliSecondsPerDrop,
-    LOCK_DOWN_DELAY: RULE_LOCK_DOWN_DELAY,
-    ROW_CLEAR_DURATION: RULE_ROW_CLEAR_DURATION,
+    Durations,
     SOFT_DROP_MULTIPLIER: RULE_SOFT_DROP_MULTIPLIER,
     LINES_LEVEL_CHANGE: RULE_LINES_LEVEL_CHANGE,
 };

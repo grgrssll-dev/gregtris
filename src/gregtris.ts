@@ -2,7 +2,7 @@ import { rand, bucketRowFull } from './utils';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import Piece from './piece';
 import CurrentPiece from './currentPiece';
-import { Container, CoordType, GameState, Coord } from './interfaces';
+import { Container, CoordType, GameState, Coord, DropState } from './interfaces';
 import gamePieces from './gamePieces';
 import { 
     Direction,
@@ -31,6 +31,9 @@ import {
     GAME_STATE_PAUSED,
     GAME_STATE_OVER,
     HIGH_SCORE_KEY,
+    DROP_STATE_WAITING,
+    DROP_STATE_DROPPING,
+    DROP_STATE_STOPPED,
 } from './constants';
 import Keys from './keys';
 import Rules from './rules';
@@ -75,14 +78,17 @@ export default class Gregtris {
 
     private gameState: GameState = GAME_STATE_LOADING;
 
-    private previousTime: number|null = null;
+    private previousTime: number = 0;
     private beginTime: number|null = null;
     private loadingTime: number|null = null;
     private startTime: number|null = null;
     private pauseTime: number|null = null;
     private overTime: number|null = null;
     private pieceTime: number|null = null;
-    private animaationTime: number|null = null;
+    private dropLockTime: number|null = null;
+    private clearRowTime: number|null = null;
+
+    private loopCounter = 0;
 
     private boundKeyListener = this.keyListener.bind(this);
     private boundLoop = this.loop.bind(this);
@@ -214,17 +220,18 @@ export default class Gregtris {
     }
 
     private moveCurrentPiece(dir: MovementDirection) {
-        const curr = this.currentPiece;
-        let newX = curr.getX();
+        let newX = this.currentPiece.getX();
         switch(dir) {
             case DIR_LEFT: {
-                const {safeX } = this.fitPiece(curr, curr.getX() - 1, curr.getY());
-                newX = safeX;
+                if (this.canMoveLeft()) {
+                    newX = newX - 1;
+                }
                 break;
             }
             case DIR_RIGHT:{
-                const {safeX } = this.fitPiece(curr, curr.getX() + 1, curr.getY());
-                newX = safeX;
+                if (this.canMoveRight()) {
+                    newX = newX + 1;
+                }
                 break;
             }
             default:
@@ -451,9 +458,10 @@ export default class Gregtris {
 
     private fillSquare(x: number, y: number) {
         if (this.bucket[y][x]) {
+            // this.log('FILL BUCKET', x, y, this.bucket[y][x]);
             const dim = this.px(1);
-            const pX = this.px(x);
-            const pY = this.px(y);
+            const pX = this.px(x + this.conts.board.x);
+            const pY = this.px(y + this.conts.board.y);
             this.ctx.fillStyle = `${this.bucket[y][x]}`;
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.fillRect(pX, pY, dim, dim);
@@ -522,13 +530,23 @@ export default class Gregtris {
     }
 
     private addPieceToBucket(piece: Piece, x: number, y: number) {
+        this.log('AddingPiece', piece.getMatrix(), x, y);
+        // this.log('BUCKET BEFORE')
+        // this.logBucket();
+        const matrix = piece.getMatrix();
         for (let bX = 0; bX < piece.getCols(); bX++) {
             for (let bY = 0; bY < piece.getRows(); bY ++) {
                 if (!this.bucket[y + bY][x + bX]) {
-                    this.bucket[y + bY][x + bX] = piece.getColor();
+                    this.bucket[y + bY][x + bX] = matrix[bY][bX] ? piece.getColor() : '';
                 }
             }
         }
+        // this.log('BUCKET AFTER')
+        // this.logBucket();
+    }
+
+    private logBucket() {
+        this.bucket.forEach((r, i) => this.log(`${i}`.padStart(2, '0'), '|', r.map(c => +(!!c)).join(',')));
     }
 
     private clearBucketRectangle() {
@@ -543,7 +561,7 @@ export default class Gregtris {
     private drawBucket() {
         for (let y = 0; y < this.bucket.length; y++) {
             for (let x = 0; x < this.bucket[y].length; x++) {
-                this.fillSquare(x, y);
+                this.fillSquare(x, y,);
             }
         }
     }
@@ -569,68 +587,50 @@ export default class Gregtris {
         this.setScore(this.currentScore + scoreInc);
     }
 
-    private detectCollision(piece: Piece, x: number, y: number): boolean {
-        let collides = false;
+    private canPieceFit(piece: Piece, toX: number, toY: number) :boolean {
+        let canMove = true;
         const matrix = piece.getMatrix();
-        const rowCount = piece.getRows();
-        const colCount = piece.getCols();
-        const lastRow = matrix[rowCount - 1];
-        // TODO FIX
-        for (let col = 0; col < colCount; col++) {
-            const hasBlock = lastRow[col];
-            if (hasBlock && this.bucket[y + rowCount][x + col]) {
-                return true;
-            }
-        }
-
-        return collides;
-    }
-
-    private detectCollision2(piece: Piece, x: number, y: number) {
-        const pieceBottom = this.getPieceBottom(piece);
-
-    }
-    
-    private getPieceBottom(piece: Piece): number[] {
-        const pieceBottom: number[] = [];
-        const matrix = piece.getMatrix();
-        const lastRow = piece.getRows() - 1;
-        for (let pieceX = 0; pieceX < piece.getCols(); pieceX++) {
-            let row = lastRow;
-            while (!matrix[row][pieceX] && row >= 0) {
-                row--;
-            }
-            pieceBottom.push(row)
-        }
-        return pieceBottom;
-    }
-    
-    private getPieceRight(piece: Piece): number[] {
-        const pieceRight: number[] = [];
-        const matrix = piece.getMatrix();
-        const lastCol = piece.getCols() - 1;
-        for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
-            let col = lastCol;
-            while (!matrix[pieceY][col] && col >= 0) {
-                col--;
-            }
-            pieceRight.push(col)
-        }
-        return pieceRight;
-    }
-    
-    private getPieceLeft(piece: Piece): number[] {
-        const pieceLeft: number[] = [];
-        const matrix = piece.getMatrix();
+        const rows = piece.getRows();
+        const cols = piece.getCols();
         const firstCol = 0;
-        for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
-            let col = firstCol;
-            while (!matrix[pieceY][col] && col <= piece.getCols()) {
-                col++;
-            }
-            pieceLeft.push(col)
+        const lastCol = cols - 1;
+        const lastRow = rows - 1;
+        // off board
+        if (toX < 0 || toX + lastCol >= COLS || toY < 0 || toY + lastRow >= ROWS) {
+            return false;
         }
-        return pieceLeft;
+        for (let i = 0; i < rows; i++) {
+            const row = matrix[i];
+            if (!!row[firstCol] && !!this.bucket[toY + i][toX + firstCol]) {
+                this.log('fail fit firstCol', toX + firstCol, toY + i, this.bucket[toY + i][toX + firstCol]);
+                return false;
+            }
+            if (!!row[lastCol] && !!this.bucket[toY + i][toX + lastCol]) {
+                this.log('fail fit lastCol', toX + lastCol, toY + i, this.bucket[toY + i][toX + lastCol]);
+                return false;
+            }
+        }
+        for (let i = 0; i < cols; i++) {
+            const row = matrix[lastRow];
+            if (!!row[i] && !!this.bucket[toY + lastRow][toX + i]) {
+                this.log('fail fit lastRow', toX + i, toY + lastRow, this.bucket[toY + lastRow][toX + i]);
+                return false;
+            }
+        }
+
+        return canMove;
+    }
+
+    private canMoveRight() :boolean {
+        return this.canPieceFit(this.currentPiece, this.currentPiece.getX() + 1, this.currentPiece.getY());
+    }
+
+    private canMoveLeft() :boolean {
+        return this.canPieceFit(this.currentPiece, this.currentPiece.getX() - 1, this.currentPiece.getY());
+    }
+
+    private canMoveDown() :boolean {
+        return this.canPieceFit(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY() + 1);
     }
 
     private detectFullRows(): number[] {
@@ -659,28 +659,8 @@ export default class Gregtris {
         this.bucket.unshift(newRow);
     }
 
-    private calculateDrop(time: number): boolean {
-        // TODO rework this
-        let dropped = false;
-        const now = Date.now();
-        const diff = now - time;
-        const timeDiff = Rules.MiliSecondsPerDrop[this.level];
-        if (diff >= timeDiff) {
-            if (!this.detectCollision(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY())) {
-                this.currentPiece.setY(this.currentPiece.getY());
-                this.pieceTime = now;
-            } else {
-                this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
-                this.initializePiece();
-                dropped = true;
-            }
-        }
-        return dropped;
-    }
-
     private loop(time: number) {
         const currentTime = Date.now();
-        // this.log('loop', this.gameState, (currentTime - (this.previousTime || currentTime)));
         const handler = this.loopHandlers[this.gameState];
         if (handler) {
             handler(currentTime);
@@ -708,9 +688,71 @@ export default class Gregtris {
         this.writeWord('LOADING…', 6, 9, '#f20');
     }
 
+    private clearRowAnimationTween(i: number) {
+        // TODO
+    }
+
+    private calculateDrop(time: number): DropState {
+        let dropped: DropState = DROP_STATE_WAITING;
+        const diff = time - (this.pieceTime || 0);
+        const showLog = this.loopCounter % 30 === 0;
+        const dropTimer = Rules.MiliSecondsPerDrop[this.level];
+        if (showLog) {
+            this.log('calcDrop', diff, '|', dropTimer, '|', Math.floor(diff / 1000), '|', Math.floor(dropTimer / 1000));
+        }
+        if (diff >= dropTimer) {
+            if (this.canMoveDown()) {
+                this.log('CanMoveDown');
+                this.currentPiece.setY(this.currentPiece.getY() + 1);
+                this.pieceTime = time;
+                this.dropLockTime = null;
+                dropped = DROP_STATE_DROPPING;
+            } else {
+                this.log('Dropped');
+                this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                this.initializePiece();
+                this.dropLockTime = time;
+                dropped = DROP_STATE_STOPPED;
+            }
+        } else {
+            if (showLog) {
+                this.log('NOTHING', diff, Math.floor(dropTimer), time, this.pieceTime);
+            }
+        }
+        return dropped;
+    }
+
     private loopStarted(time: number) {
-        if (this.calculateDrop(time)) {
-            // do clear animation if needed
+        if (this.dropLockTime){
+            const dlDiff = time - this.dropLockTime;
+            // this.log('DROP LOCK WAIT', dlDiff - Rules.Durations.LOCK_DOWN_DURATION, dlDiff, Rules.Durations.LOCK_DOWN_DURATION);
+            if (dlDiff > Rules.Durations.LOCK_DOWN_DURATION) {
+                this.dropLockTime = null;
+                this.pieceTime = Date.now();
+            } else {
+                return;
+            }
+        } else if (this.clearRowTime) {
+            const crDiff = time - this.clearRowTime;
+            // this.log('CLEAR ROW WAIT', crDiff - Rules.Durations.ROW_CLEAR_DURATION, crDiff, Rules.Durations.ROW_CLEAR_DURATION);
+            if (crDiff > Rules.Durations.ROW_CLEAR_DURATION) {
+                this.clearRowTime = null; 
+                this.clearRowAnimationTween(1);
+                this.pieceTime = Date.now();
+            } else {
+                this.clearRowAnimationTween(crDiff / Rules.Durations.ROW_CLEAR_DURATION);
+                return;
+            }
+        } else if (this.pieceTime) {
+            const dropState = this.calculateDrop(time);
+            this.log('DROP STATE', dropState);
+            if (dropState === DROP_STATE_DROPPING) {
+                // in prog
+            } else if (dropState === DROP_STATE_STOPPED) {
+                // dropped
+            } else if (dropState === DROP_STATE_WAITING) {
+                // nothing
+            }
         }
         this.clearGameBoard();
         this.drawGrid();
@@ -719,6 +761,7 @@ export default class Gregtris {
         this.drawCurrentPiece();
         this.drawNextPiece();
         this.drawBucket();
+        this.loopCounter++;
     }
 
     private loopPaused(time: number) {
@@ -796,7 +839,7 @@ export default class Gregtris {
         this.log('ResetGame');
         this.begin();
         this.killed = false;
-        this.previousTime = null;
+        this.previousTime = 0;
         this.loadingTime = null;
         this.startTime = null;
         this.pauseTime = null;
@@ -813,8 +856,9 @@ export default class Gregtris {
         if (this.gameState === GAME_STATE_PAUSED && this.pauseTime) {
             this.startTime = this.startTime + (Date.now() - this.pauseTime);
             this.pauseTime = null;
+        } else {
+            this.initializePiece();
         }
-        this.initializePiece();
         this.setGameState(GAME_STATE_STARTED);
     }
 
@@ -840,7 +884,7 @@ export default class Gregtris {
         if (this.requestAnimationFrameHandle) {
             cancelAnimationFrame(this.requestAnimationFrameHandle);
         }
-        this.previousTime = null;
+        this.previousTime = 0;
         this.loadingTime = null;
         this.startTime = null;
         this.pauseTime = null;
