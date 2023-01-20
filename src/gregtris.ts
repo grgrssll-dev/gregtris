@@ -1,8 +1,8 @@
-import { rand } from './utils';
+import { rand, bucketRowFull } from './utils';
 import alphabet, { SPACE_PLACEHOLDER } from './alphabet';
 import Piece from './piece';
 import CurrentPiece from './currentPiece';
-import { Container, CoordType, GameState } from './interfaces';
+import { Container, CoordType, GameState, Coord } from './interfaces';
 import gamePieces from './gamePieces';
 import { 
     Direction,
@@ -33,6 +33,7 @@ import {
     HIGH_SCORE_KEY,
 } from './constants';
 import Keys from './keys';
+import Rules from './rules';
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -529,16 +530,93 @@ export default class Gregtris {
         }
     }
 
-    private detectCollision(piece: Piece, x: number, y: number) {
-        // TODO
+    private detectCollision(piece: Piece, x: number, y: number): boolean {
+        let collides = false;
+        const matrix = piece.getMatrix();
+        const rowCount = piece.getRows();
+        const colCount = piece.getCols();
+        const lastRow = matrix[rowCount - 1];
+        // TODO FIX
+        for (let col = 0; col < colCount; col++) {
+            const hasBlock = lastRow[col];
+            if (hasBlock && this.bucket[y + rowCount][x + col]) {
+                return true;
+            }
+        }
+
+        return collides;
     }
 
-    private detectFullRows() {
-        // TODO
+    private detectCollision2(piece: Piece, x: number, y: number) {
+        const pieceBottom = this.getPieceBottom(piece);
+
+    }
+    
+    private getPieceBottom(piece: Piece): number[] {
+        const pieceBottom: number[] = [];
+        const matrix = piece.getMatrix();
+        const lastRow = piece.getRows() - 1;
+        for (let pieceX = 0; pieceX < piece.getCols(); pieceX++) {
+            let row = lastRow;
+            while (!matrix[row][pieceX] && row >= 0) {
+                row--;
+            }
+            pieceBottom.push(row)
+        }
+        return pieceBottom;
+    }
+    
+    private getPieceRight(piece: Piece): number[] {
+        const pieceRight: number[] = [];
+        const matrix = piece.getMatrix();
+        const lastCol = piece.getCols() - 1;
+        for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
+            let col = lastCol;
+            while (!matrix[pieceY][col] && col >= 0) {
+                col--;
+            }
+            pieceRight.push(col)
+        }
+        return pieceRight;
+    }
+    
+    private getPieceLeft(piece: Piece): number[] {
+        const pieceLeft: number[] = [];
+        const matrix = piece.getMatrix();
+        const firstCol = 0;
+        for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
+            let col = firstCol;
+            while (!matrix[pieceY][col] && col <= piece.getCols()) {
+                col++;
+            }
+            pieceLeft.push(col)
+        }
+        return pieceLeft;
+    }
+
+    private detectFullRows(): number[] {
+        const fullRows = [];
+        for (let y = 0; y < ROWS; y++) {
+            if (bucketRowFull(this.bucket[y])) {
+                fullRows.push(y);
+            }
+        }
+        return fullRows;
     }
 
     private clearRow(y: number) {
-        // TODO
+        const row = this.bucket[y];
+        for (let col = 0; col < COLS; col++) {
+            if (row[col] === '') {
+                return;
+            }
+        }
+        this.bucket.splice(2, 1);
+        const newRow = [];
+        for (let i = 0; i < COLS; i++) {
+            newRow.push('');
+        }
+        this.bucket.unshift(newRow);
     }
 
     private drawCurrentPiece() {
@@ -560,6 +638,24 @@ export default class Gregtris {
 
     private incrementScore(scoreInc: number) {
         this.setScore(this.currentScore + scoreInc);
+    }
+
+    private calculateDrop(time: number): boolean {
+        let dropped = false;
+        const now = Date.now();
+        const diff = now - time;
+        const timeDiff = Rules.MiliSecondsPerDrop[this.level];
+        if (diff >= timeDiff) {
+            if (!this.detectCollision(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY())) {
+                this.currentPiece.setY(this.currentPiece.getY());
+                this.pieceTime = now;
+            } else {
+                this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                this.initializePiece();
+                dropped = true;
+            }
+        }
+        return dropped;
     }
 
     private loop(time: number) {
@@ -593,6 +689,9 @@ export default class Gregtris {
     }
 
     private loopStarted(time: number) {
+        if (this.calculateDrop(time)) {
+            // do clear animation if needed
+        }
         this.clearGameBoard();
         this.drawGrid();
         this.drawOutlilnes();

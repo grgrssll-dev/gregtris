@@ -606,11 +606,16 @@ define("gamePieces", ["require", "exports", "piece"], function (require, exports
 define("utils", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.rand = void 0;
+    exports.bucketRowFull = exports.rand = void 0;
     function rand(min, max) {
         return min + (Math.round(Number.MAX_SAFE_INTEGER * Math.random()) % (max - min + 1));
     }
     exports.rand = rand;
+    function bucketRowFull(a) {
+        const checker = (v) => v !== '';
+        return a.every(checker);
+    }
+    exports.bucketRowFull = bucketRowFull;
 });
 define("keys", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -655,7 +660,52 @@ define("keys", ["require", "exports"], function (require, exports) {
     };
     exports.default = Keys;
 });
-define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants", "keys"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1, keys_1) {
+define("rules", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.MiliSecondsPerDrop = exports.Scoring = exports.Speeds = exports.RULE_LINES_LEVEL_CHANGE = exports.RULE_ROW_CLEAR_DURATION = exports.RULE_SOFT_DROP_MULTIPLIER = exports.RULE_LOCK_DOWN_DELAY = void 0;
+    exports.RULE_LOCK_DOWN_DELAY = 0.5;
+    exports.RULE_SOFT_DROP_MULTIPLIER = 20;
+    exports.RULE_ROW_CLEAR_DURATION = 0.5;
+    exports.RULE_LINES_LEVEL_CHANGE = 10;
+    exports.Speeds = {
+        1: 0.01667,
+        2: 0.021017,
+        3: 0.026977,
+        4: 0.035256,
+        5: 0.04693,
+        6: 0.06361,
+        7: 0.0879,
+        8: 0.1236,
+        9: 0.1775,
+        10: 0.2598,
+        11: 0.388,
+        12: 0.59,
+        13: 0.92,
+        14: 1.46,
+        15: 2.36,
+    };
+    exports.Scoring = {
+        line: {
+            1: (level) => 40 * level,
+            2: (level) => 100 * level,
+            3: (level) => 300 * level,
+            4: (level) => 1200 * level,
+        }
+    };
+    exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * 1000);
+    const Rules = {
+        Scoring: exports.Scoring,
+        Speeds: exports.Speeds,
+        MiliSecondsPerDrop: exports.MiliSecondsPerDrop,
+        LOCK_DOWN_DELAY: exports.RULE_LOCK_DOWN_DELAY,
+        ROW_CLEAR_DURATION: exports.RULE_ROW_CLEAR_DURATION,
+        SOFT_DROP_MULTIPLIER: exports.RULE_SOFT_DROP_MULTIPLIER,
+        LINES_LEVEL_CHANGE: exports.RULE_LINES_LEVEL_CHANGE,
+    };
+    exports.default = Rules;
+});
+define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants", "keys", "rules"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1, keys_1, rules_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const gamePiecesArray = Object.values(gamePieces_1.default);
@@ -1051,13 +1101,84 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             }
         }
         detectCollision(piece, x, y) {
-            // TODO
+            let collides = false;
+            const matrix = piece.getMatrix();
+            const rowCount = piece.getRows();
+            const colCount = piece.getCols();
+            const lastRow = matrix[rowCount - 1];
+            // TODO FIX
+            for (let col = 0; col < colCount; col++) {
+                const hasBlock = lastRow[col];
+                if (hasBlock && this.bucket[y + rowCount][x + col]) {
+                    return true;
+                }
+            }
+            return collides;
+        }
+        detectCollision2(piece, x, y) {
+            const pieceBottom = this.getPieceBottom(piece);
+        }
+        getPieceBottom(piece) {
+            const pieceBottom = [];
+            const matrix = piece.getMatrix();
+            const lastRow = piece.getRows() - 1;
+            for (let pieceX = 0; pieceX < piece.getCols(); pieceX++) {
+                let row = lastRow;
+                while (!matrix[row][pieceX] && row >= 0) {
+                    row--;
+                }
+                pieceBottom.push(row);
+            }
+            return pieceBottom;
+        }
+        getPieceRight(piece) {
+            const pieceRight = [];
+            const matrix = piece.getMatrix();
+            const lastCol = piece.getCols() - 1;
+            for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
+                let col = lastCol;
+                while (!matrix[pieceY][col] && col >= 0) {
+                    col--;
+                }
+                pieceRight.push(col);
+            }
+            return pieceRight;
+        }
+        getPieceLeft(piece) {
+            const pieceLeft = [];
+            const matrix = piece.getMatrix();
+            const firstCol = 0;
+            for (let pieceY = 0; pieceY < piece.getRows(); pieceY++) {
+                let col = firstCol;
+                while (!matrix[pieceY][col] && col <= piece.getCols()) {
+                    col++;
+                }
+                pieceLeft.push(col);
+            }
+            return pieceLeft;
         }
         detectFullRows() {
-            // TODO
+            const fullRows = [];
+            for (let y = 0; y < constants_1.ROWS; y++) {
+                if ((0, utils_1.bucketRowFull)(this.bucket[y])) {
+                    fullRows.push(y);
+                }
+            }
+            return fullRows;
         }
         clearRow(y) {
-            // TODO
+            const row = this.bucket[y];
+            for (let col = 0; col < constants_1.COLS; col++) {
+                if (row[col] === '') {
+                    return;
+                }
+            }
+            this.bucket.splice(2, 1);
+            const newRow = [];
+            for (let i = 0; i < constants_1.COLS; i++) {
+                newRow.push('');
+            }
+            this.bucket.unshift(newRow);
         }
         drawCurrentPiece() {
             this.drawPieceOnBoard(this.currentPiece);
@@ -1075,6 +1196,24 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         incrementScore(scoreInc) {
             this.setScore(this.currentScore + scoreInc);
+        }
+        calculateDrop(time) {
+            let dropped = false;
+            const now = Date.now();
+            const diff = now - time;
+            const timeDiff = rules_1.default.MiliSecondsPerDrop[this.level];
+            if (diff >= timeDiff) {
+                if (!this.detectCollision(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY())) {
+                    this.currentPiece.setY(this.currentPiece.getY());
+                    this.pieceTime = now;
+                }
+                else {
+                    this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                    this.initializePiece();
+                    dropped = true;
+                }
+            }
+            return dropped;
         }
         loop(time) {
             const currentTime = Date.now();
@@ -1104,6 +1243,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('LOADING…', 6, 9, '#f20');
         }
         loopStarted(time) {
+            if (this.calculateDrop(time)) {
+                // do clear animation if needed
+            }
             this.clearGameBoard();
             this.drawGrid();
             this.drawOutlilnes();
@@ -1226,55 +1368,5 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
     }
     exports.default = Gregtris;
-});
-define("rules", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.MiliSecondsPerDrop = exports.Speeds = exports.RULE_ROW_CLEAR_DURATION = exports.RULE_SOFT_DROP_MULTIPLIER = exports.RULE_LOCK_DOWN_DELAY = void 0;
-    exports.RULE_LOCK_DOWN_DELAY = 0.5;
-    exports.RULE_SOFT_DROP_MULTIPLIER = 2;
-    exports.RULE_ROW_CLEAR_DURATION = 0.5;
-    exports.Speeds = {
-        1: 0.01667,
-        2: 0.021017,
-        3: 0.026977,
-        4: 0.035256,
-        5: 0.04693,
-        6: 0.06361,
-        7: 0.0879,
-        8: 0.1236,
-        9: 0.1775,
-        10: 0.2598,
-        11: 0.388,
-        12: 0.59,
-        13: 0.92,
-        14: 1.46,
-        15: 2.36,
-    };
-    // SCORING
-    // Single 	100 × level
-    // Double 	300 × level
-    // Triple 	500 × level
-    // Tetris 	800 × level; difficult
-    // T-Spin Mini no lines 	100 × level
-    // T-Spin no lines 	400 × level
-    // T-Spin Mini Single 	200 × level; difficult
-    // T-Spin Single 	800 × level; difficult
-    // T-Spin Mini Double (if present) 	400 × level; difficult
-    // T-Spin Double 	1200 × level; difficult
-    // T-Spin Triple 	1600 × level; difficult
-    // Back-to-Back difficult line clears 	Action score × 1.5 (excluding soft drop and hard drop)
-    // Combo 	50 × combo count × level
-    // Soft drop 	1 per cell
-    // Hard drop 	2 per cell 
-    exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * 1000);
-    const Rules = {
-        Speeds: exports.Speeds,
-        MiliSecondsPerDrop: exports.MiliSecondsPerDrop,
-        LOCK_DOWN_DELAY: exports.RULE_LOCK_DOWN_DELAY,
-        ROW_CLEAR_DURATION: exports.RULE_ROW_CLEAR_DURATION,
-        SOFT_DROP_MULTIPLIER: exports.RULE_SOFT_DROP_MULTIPLIER,
-    };
-    exports.default = Rules;
 });
 //# sourceMappingURL=gregtris.js.map
