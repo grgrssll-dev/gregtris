@@ -941,6 +941,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 if (this.currentPiece.getX() + this.currentPiece.getCols() > constants_1.COLS) {
                     this.currentPiece.setX(constants_1.COLS - this.currentPiece.getCols());
                 }
+                if (this.currentPiece.getY() + this.currentPiece.getRows() > constants_1.ROWS) {
+                    this.currentPiece.setY(constants_1.COLS - this.currentPiece.getRows());
+                }
             }
         }
         randDirection() {
@@ -1263,10 +1266,13 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             const piece = this.currentPiece.clone();
             piece.rotate(directions_4.DIR_RIGHT);
             let pX = piece.getX();
-            const pY = piece.getY();
+            let pY = piece.getY();
             const matrix = piece.getMatrix();
             if (pX + piece.getCols() > constants_1.COLS) {
                 pX = constants_1.COLS - piece.getCols();
+            }
+            if (pY + piece.getRows() > constants_1.ROWS) {
+                pY = constants_1.COLS - piece.getRows();
             }
             for (let y = 0; y < piece.getRows(); y++) {
                 for (let x = 0; x < piece.getCols(); x++) {
