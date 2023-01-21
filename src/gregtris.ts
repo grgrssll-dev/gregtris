@@ -278,7 +278,12 @@ export default class Gregtris {
         if (this.isHardDrop) {
             return;
         }
-        this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
+        if (this.canRotate()) {
+            this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
+            if (this.currentPiece.getX() + this.currentPiece.getCols() > COLS) {
+                this.currentPiece.setX(COLS - this.currentPiece.getCols());
+            }
+        }
     }
 
     private randDirection(): Direction {
@@ -575,6 +580,7 @@ export default class Gregtris {
             }
         }
     }
+
     private clearDropPieceModifier(force = false) {
         if (force || !this.isHardDrop) {
             this.isHardDrop = false;
@@ -682,6 +688,27 @@ export default class Gregtris {
 
     private canMoveDown() :boolean {
         return this.canPieceFit(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY() + 1);
+    }
+
+    private canRotate(): boolean {
+        const canRotate = true;
+        const piece = this.currentPiece.clone();
+        piece.rotate(DIR_RIGHT);
+        let pX = piece.getX();
+        const pY = piece.getY();
+        const matrix = piece.getMatrix();
+        if (pX + piece.getCols() > COLS) {
+            pX = COLS - piece.getCols();
+        }
+        for (let y = 0; y < piece.getRows(); y++) {
+            for (let x = 0; x < piece.getCols(); x++) {
+                if (matrix[y][x] && this.bucket[pY + y][pX + x]) {
+                    return false;
+                }
+            }
+        }
+
+        return canRotate;
     }
 
     private detectFullRows(): number[] {

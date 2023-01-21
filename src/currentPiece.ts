@@ -1,6 +1,7 @@
 import { Matrix } from './interfaces';
 import { Direction, DIR_UP } from './directions';
 import Piece from './piece';
+import { COLS } from './constants';
 
 export default class CurrentPiece extends Piece {
     private x: number = 0;
