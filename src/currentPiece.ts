@@ -31,6 +31,15 @@ export default class CurrentPiece extends Piece {
         return this;
     }
 
+    rotate(direction: Direction): CurrentPiece {
+        const beforeCols = this.getCols();
+        const afterCols = this.getRows();
+        super.rotate(direction);
+        const multiplier = beforeCols - afterCols < 0 ? -1 : 1;
+        this.setX(this.getX() + (multiplier * Math.floor(Math.abs(beforeCols - afterCols) / 2)));
+        return this;
+    }
+
     clone(rotation: Direction = DIR_UP): CurrentPiece {
         super.clone(rotation);
         const newPiece = CurrentPiece.fromPiece(this, this.x, this.y);

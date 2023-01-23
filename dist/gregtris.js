@@ -547,6 +547,14 @@ define("currentPiece", ["require", "exports", "directions", "piece"], function (
             this.y = y;
             return this;
         }
+        rotate(direction) {
+            const beforeCols = this.getCols();
+            const afterCols = this.getRows();
+            super.rotate(direction);
+            const multiplier = beforeCols - afterCols < 0 ? -1 : 1;
+            this.setX(this.getX() + (multiplier * Math.floor(Math.abs(beforeCols - afterCols) / 2)));
+            return this;
+        }
         clone(rotation = directions_3.DIR_UP) {
             super.clone(rotation);
             const newPiece = CurrentPiece.fromPiece(this, this.x, this.y);
