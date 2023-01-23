@@ -34,7 +34,6 @@ import {
     DROP_STATE_WAITING,
     DROP_STATE_DROPPING,
     DROP_STATE_STOPPED,
-    DROP_STATE_GAME_OVER,
 } from './constants';
 
 const gamePiecesArray = Object.values(gamePieces);
@@ -295,13 +294,14 @@ export default class Gregtris {
     private setGameText() {
         const levelText = `LEVEL ${this.level}`;
         this.writeWord(levelText, Math.floor((GAME_COLS - 2 - levelText.length) / 2) + 1 , 1);
-        this.writeWord('TOP', this.conts.score.x, this.conts.score.y);
-        this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + MARGIN);
-        this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (MARGIN * 4));
+        const topColor = this.isNewHighScore ? '#F20' : '#000';
+        this.writeWord('TOP', this.conts.score.x, this.conts.score.y, '#ddd');
+        this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + MARGIN, topColor);
+        this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (MARGIN * 4), '#ddd');
         this.writeWord(`${this.currentScore}`, this.conts.score.x, this.conts.score.y + (MARGIN * 5));
-        this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (MARGIN * 8));
+        this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (MARGIN * 8), '#ddd');
         this.writeWord(`${this.linesCleared}`, 12, this.conts.score.y + (MARGIN * 9));
-        this.writeWord('NEXT', this.conts.next.x, this.conts.next.y);
+        this.writeWord('NEXT', this.conts.next.x, this.conts.next.y, '#ddd');
     }
 
     private getRandomPiece() {
@@ -319,7 +319,7 @@ export default class Gregtris {
     }
 
     private drawGrid() {
-        this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.1)';
         this.ctx.lineWidth = MX;
         for (let i = 0; i < GAME_COLS; i++) { 
             const x0 = i * this.gridSize;
@@ -352,26 +352,27 @@ export default class Gregtris {
             score,
         } = this.conts;
         this.ctx.strokeStyle = '#000';
+        this.ctx.fillStyle = 'rgba(255,255,255,0.5)';
         this.ctx.lineWidth = PX;
-        this.ctx.strokeRect(
+        this.ctx.fillRect(
             this.px(board.x), 
             this.px(board.y), 
             this.px(board.width), 
             this.px(board.height)
         );
-        this.ctx.strokeRect(
+        this.ctx.fillRect(
             this.px(title.x), 
             this.px(title.y), 
             this.px(title.width), 
             this.px(title.height)
         );
-        this.ctx.strokeRect(
+        this.ctx.fillRect(
             this.px(next.x), 
             this.px(next.y), 
             this.px(next.width), 
             this.px(next.height)
         );
-        this.ctx.strokeRect(
+        this.ctx.fillRect(
             this.px(score.x), 
             this.px(score.y), 
             this.px(score.width), 
@@ -384,7 +385,7 @@ export default class Gregtris {
     }
 
     private drawModal() {
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         this.ctx.fillRect(
             this.px(this.conts.modal.x), 
             this.px(this.conts.modal.y), 
@@ -465,6 +466,10 @@ export default class Gregtris {
         const x = Math.floor((COLS - this.currentPiece.getCols()) / 2);
         this.currentPiece.setX(x);
         this.pieceTime = Date.now();
+        if (this.doesOverlap(this.currentPiece, x, 0)) {
+            this.log('GAME OVER');
+            this.endGame();
+        }
         return this;
     }
 
@@ -540,6 +545,8 @@ export default class Gregtris {
 
     private clearGameBoard() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = 'rgb(0,0,0)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     private setLevel(level: number) {
@@ -612,7 +619,11 @@ export default class Gregtris {
         this.log('SetScore', score);
         this.currentScore = score;
         if (this.currentScore > this.highScore) {
+            this.highScore = this.currentScore;
+            localStorage.setItem(HIGH_SCORE_KEY, `${this.currentScore}`);
             this.isNewHighScore = true;
+        } else {
+            this.isNewHighScore = false;
         }
     }
 
@@ -701,9 +712,9 @@ export default class Gregtris {
         this.drawModal();
         this.writeWord('GREGTRIS', 6, 7, '#092');
         this.writeWord('PRESS', 7, 9, '#06f');
-        this.writeWord('ENTER', 7, 10, '#f60');
-        this.writeWord('TO START', 6, 11, '#f20');
-        this.writeWord('NEW GAME', 6, 12, '#f0f');
+        this.writeWord('ENTER', 7, 10, '#f20');
+        this.writeWord('TO START', 6, 11, '#06f');
+        this.writeWord('NEW GAME', 6, 12, '#f20');
     }
 
     private loopLoading(time: number) {
@@ -748,9 +759,6 @@ export default class Gregtris {
                 this.dropLockTime = null;
                 dropped = DROP_STATE_DROPPING;
             } else {
-                if (this.bucket[0][Math.floor(ROWS / 2)]) {
-                    this.endGame();
-                }
                 // TODO should still be able too rotate for duration of dropLock timer (and continue falling if able)...
                 this.log('Dropped');
                 this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
@@ -800,8 +808,6 @@ export default class Gregtris {
                     this.clearRowTime = Date.now();
                 }
                 return;
-            } else if (dropState === DROP_STATE_GAME_OVER) {
-                this.endGame();
             }
         }
         this.clearGameBoard();
@@ -822,6 +828,11 @@ export default class Gregtris {
     private loopGameOver(time: number) {
         this.clearGameBoard();
         this.drawGrid();
+        this.drawOutlilnes();
+        this.setGameText();
+        this.drawCurrentPiece();
+        this.drawNextPiece();
+        this.drawBucket();
         this.drawModal();
         this.writeWord('GAME', 6, 7, '#00F');
         this.writeWord('OVER', 10, 7, '#F00');
@@ -830,7 +841,7 @@ export default class Gregtris {
         this.writeWord('LEVEL', 6, 10, '#666');
         this.writeWord(`${this.level}`, 14 - `${this.level}`.length, 10, '#092');
         this.writeWord('SCORE', 6, 12, '#666');
-        this.writeWord(`${this.currentScore}`, 14 - `${this.currentScore}`.length , 13, '#f06');
+        this.writeWord(`${this.currentScore}`, 14 - `${this.currentScore}`.length , 13, '#06f');
         this.writeWord('GAME', 6, 15, '#00F');
         this.writeWord('OVER', 10, 15, '#F00');
         this.writeWord('GAME', 6, 16, '#F00');

@@ -26,7 +26,6 @@ export const ANIMATION_STATE_WAITING = 'WAITING';
 export const DROP_STATE_DROPPING = 'DROPPING';
 export const DROP_STATE_STOPPED = 'STOPPED'; 
 export const DROP_STATE_WAITING = 'WAITING';
-export const DROP_STATE_GAME_OVER = 'GAME_OVER';
 
 
 const Constants = {
@@ -53,7 +52,6 @@ const Constants = {
     DROP_STATE_DROPPING,
     DROP_STATE_STOPPED,
     DROP_STATE_WAITING,
-    DROP_STATE_GAME_OVER,
 };
 
 export default Constants;

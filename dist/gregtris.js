@@ -334,7 +334,7 @@ define("interfaces", ["require", "exports"], function (require, exports) {
 define("constants", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.DROP_STATE_GAME_OVER = exports.DROP_STATE_WAITING = exports.DROP_STATE_STOPPED = exports.DROP_STATE_DROPPING = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
+    exports.DROP_STATE_WAITING = exports.DROP_STATE_STOPPED = exports.DROP_STATE_DROPPING = exports.ANIMATION_STATE_WAITING = exports.ANIMATION_STATE_CLEARING = exports.ANIMATION_STATE_DROPPING = exports.GAME_STATE_OVER = exports.GAME_STATE_PAUSED = exports.GAME_STATE_STARTED = exports.GAME_STATE_BEFORE_START = exports.GAME_STATE_LOADING = exports.HIGH_SCORE_KEY = exports.DIMENSION_RATIO = exports.ALPHA_DIVISOR = exports.FACET_DIVISOR = exports.GAME_SIZE_DIVISOR = exports.PX = exports.MX = exports.MARGIN = exports.GAME_COLS = exports.GAME_ROWS = exports.COLS = exports.ROWS = void 0;
     exports.ROWS = 20;
     exports.COLS = 10;
     exports.GAME_ROWS = 24;
@@ -358,7 +358,6 @@ define("constants", ["require", "exports"], function (require, exports) {
     exports.DROP_STATE_DROPPING = 'DROPPING';
     exports.DROP_STATE_STOPPED = 'STOPPED';
     exports.DROP_STATE_WAITING = 'WAITING';
-    exports.DROP_STATE_GAME_OVER = 'GAME_OVER';
     const Constants = {
         ROWS: exports.ROWS,
         COLS: exports.COLS,
@@ -383,7 +382,6 @@ define("constants", ["require", "exports"], function (require, exports) {
         DROP_STATE_DROPPING: exports.DROP_STATE_DROPPING,
         DROP_STATE_STOPPED: exports.DROP_STATE_STOPPED,
         DROP_STATE_WAITING: exports.DROP_STATE_WAITING,
-        DROP_STATE_GAME_OVER: exports.DROP_STATE_GAME_OVER,
     };
     exports.default = Constants;
 });
@@ -960,13 +958,14 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         setGameText() {
             const levelText = `LEVEL ${this.level}`;
             this.writeWord(levelText, Math.floor((constants_1.GAME_COLS - 2 - levelText.length) / 2) + 1, 1);
-            this.writeWord('TOP', this.conts.score.x, this.conts.score.y);
-            this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + constants_1.MARGIN);
-            this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 4));
+            const topColor = this.isNewHighScore ? '#F20' : '#000';
+            this.writeWord('TOP', this.conts.score.x, this.conts.score.y, '#ddd');
+            this.writeWord(`${this.highScore}`, this.conts.score.x, this.conts.score.y + constants_1.MARGIN, topColor);
+            this.writeWord('SCORE', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 4), '#ddd');
             this.writeWord(`${this.currentScore}`, this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 5));
-            this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 8));
+            this.writeWord('LINES', this.conts.score.x, this.conts.score.y + (constants_1.MARGIN * 8), '#ddd');
             this.writeWord(`${this.linesCleared}`, 12, this.conts.score.y + (constants_1.MARGIN * 9));
-            this.writeWord('NEXT', this.conts.next.x, this.conts.next.y);
+            this.writeWord('NEXT', this.conts.next.x, this.conts.next.y, '#ddd');
         }
         getRandomPiece() {
             gamePiecesArray.sort();
@@ -980,7 +979,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             return n + this.conts.board[coord];
         }
         drawGrid() {
-            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.1)';
             this.ctx.lineWidth = constants_1.MX;
             for (let i = 0; i < constants_1.GAME_COLS; i++) {
                 const x0 = i * this.gridSize;
@@ -1006,17 +1005,18 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         drawOutlilnes() {
             const { board, title, next, score, } = this.conts;
             this.ctx.strokeStyle = '#000';
+            this.ctx.fillStyle = 'rgba(255,255,255,0.5)';
             this.ctx.lineWidth = constants_1.PX;
-            this.ctx.strokeRect(this.px(board.x), this.px(board.y), this.px(board.width), this.px(board.height));
-            this.ctx.strokeRect(this.px(title.x), this.px(title.y), this.px(title.width), this.px(title.height));
-            this.ctx.strokeRect(this.px(next.x), this.px(next.y), this.px(next.width), this.px(next.height));
-            this.ctx.strokeRect(this.px(score.x), this.px(score.y), this.px(score.width), this.px(score.height));
+            this.ctx.fillRect(this.px(board.x), this.px(board.y), this.px(board.width), this.px(board.height));
+            this.ctx.fillRect(this.px(title.x), this.px(title.y), this.px(title.width), this.px(title.height));
+            this.ctx.fillRect(this.px(next.x), this.px(next.y), this.px(next.width), this.px(next.height));
+            this.ctx.fillRect(this.px(score.x), this.px(score.y), this.px(score.width), this.px(score.height));
         }
         setHighScore(score) {
             localStorage.set(constants_1.HIGH_SCORE_KEY, score);
         }
         drawModal() {
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             this.ctx.fillRect(this.px(this.conts.modal.x), this.px(this.conts.modal.y), this.px(this.conts.modal.width), this.px(this.conts.modal.height));
             this.ctx.strokeStyle = '#000';
             this.ctx.lineWidth = constants_1.PX;
@@ -1080,6 +1080,10 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             const x = Math.floor((constants_1.COLS - this.currentPiece.getCols()) / 2);
             this.currentPiece.setX(x);
             this.pieceTime = Date.now();
+            if (this.doesOverlap(this.currentPiece, x, 0)) {
+                this.log('GAME OVER');
+                this.endGame();
+            }
             return this;
         }
         placePiece(piece, x, y) {
@@ -1146,6 +1150,8 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         }
         clearGameBoard() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = 'rgb(0,0,0)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         setLevel(level) {
             if (this.level !== level) {
@@ -1210,7 +1216,12 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.log('SetScore', score);
             this.currentScore = score;
             if (this.currentScore > this.highScore) {
+                this.highScore = this.currentScore;
+                localStorage.setItem(constants_1.HIGH_SCORE_KEY, `${this.currentScore}`);
                 this.isNewHighScore = true;
+            }
+            else {
+                this.isNewHighScore = false;
             }
         }
         incrementScore(scoreInc) {
@@ -1288,9 +1299,9 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.drawModal();
             this.writeWord('GREGTRIS', 6, 7, '#092');
             this.writeWord('PRESS', 7, 9, '#06f');
-            this.writeWord('ENTER', 7, 10, '#f60');
-            this.writeWord('TO START', 6, 11, '#f20');
-            this.writeWord('NEW GAME', 6, 12, '#f0f');
+            this.writeWord('ENTER', 7, 10, '#f20');
+            this.writeWord('TO START', 6, 11, '#06f');
+            this.writeWord('NEW GAME', 6, 12, '#f20');
         }
         loopLoading(time) {
             this.clearGameBoard();
@@ -1333,9 +1344,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     dropped = constants_1.DROP_STATE_DROPPING;
                 }
                 else {
-                    if (this.bucket[0][Math.floor(constants_1.ROWS / 2)]) {
-                        this.endGame();
-                    }
                     // TODO should still be able too rotate for duration of dropLock timer (and continue falling if able)...
                     this.log('Dropped');
                     this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
@@ -1390,9 +1398,6 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     }
                     return;
                 }
-                else if (dropState === constants_1.DROP_STATE_GAME_OVER) {
-                    this.endGame();
-                }
             }
             this.clearGameBoard();
             this.drawGrid();
@@ -1410,6 +1415,11 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
         loopGameOver(time) {
             this.clearGameBoard();
             this.drawGrid();
+            this.drawOutlilnes();
+            this.setGameText();
+            this.drawCurrentPiece();
+            this.drawNextPiece();
+            this.drawBucket();
             this.drawModal();
             this.writeWord('GAME', 6, 7, '#00F');
             this.writeWord('OVER', 10, 7, '#F00');
@@ -1418,7 +1428,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.writeWord('LEVEL', 6, 10, '#666');
             this.writeWord(`${this.level}`, 14 - `${this.level}`.length, 10, '#092');
             this.writeWord('SCORE', 6, 12, '#666');
-            this.writeWord(`${this.currentScore}`, 14 - `${this.currentScore}`.length, 13, '#f06');
+            this.writeWord(`${this.currentScore}`, 14 - `${this.currentScore}`.length, 13, '#06f');
             this.writeWord('GAME', 6, 15, '#00F');
             this.writeWord('OVER', 10, 15, '#F00');
             this.writeWord('GAME', 6, 16, '#F00');
