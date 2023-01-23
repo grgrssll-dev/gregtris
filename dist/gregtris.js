@@ -740,7 +740,7 @@ define("rules", ["require", "exports"], function (require, exports) {
     };
     exports.default = Rules;
 });
-define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "directions", "constants", "keys", "rules"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, directions_4, constants_1, keys_1, rules_1) {
+define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "gamePieces", "keys", "rules", "directions", "constants"], function (require, exports, utils_1, alphabet_1, currentPiece_1, gamePieces_1, keys_1, rules_1, directions_4, constants_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const gamePiecesArray = Object.values(gamePieces_1.default);
@@ -1336,6 +1336,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                     if (this.bucket[0][Math.floor(constants_1.ROWS / 2)]) {
                         this.endGame();
                     }
+                    // TODO should still be able too rotate for duration of dropLock timer (and continue falling if able)...
                     this.log('Dropped');
                     this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                     this.initializePiece();

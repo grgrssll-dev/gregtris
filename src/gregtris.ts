@@ -4,6 +4,8 @@ import Piece from './piece';
 import CurrentPiece from './currentPiece';
 import { Container, CoordType, GameState, DropState } from './interfaces';
 import gamePieces from './gamePieces';
+import Keys from './keys';
+import Rules from './rules';
 import { 
     Direction,
     MovementDirection,
@@ -34,8 +36,6 @@ import {
     DROP_STATE_STOPPED,
     DROP_STATE_GAME_OVER,
 } from './constants';
-import Keys from './keys';
-import Rules from './rules';
 
 const gamePiecesArray = Object.values(gamePieces);
 const minDir = Math.min(...directionsArray);
@@ -751,6 +751,7 @@ export default class Gregtris {
                 if (this.bucket[0][Math.floor(ROWS / 2)]) {
                     this.endGame();
                 }
+                // TODO should still be able too rotate for duration of dropLock timer (and continue falling if able)...
                 this.log('Dropped');
                 this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                 this.initializePiece();
