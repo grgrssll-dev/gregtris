@@ -94,6 +94,7 @@ export default class Gregtris {
 
     private boundKeyDownListener = this.keyDownListener.bind(this);
     private boundKeyUpListener = this.keyUpListener.bind(this);
+    private boundResizeListener = this.resize.bind(this);
     private boundLoop = this.loop.bind(this);
 
     private loopHandlers: Record<GameState, (time: number) => void> = {
@@ -108,15 +109,19 @@ export default class Gregtris {
 
     constructor(canvas: HTMLCanvasElement, opts: Record<any, any>) {
         this.canvas = canvas;
+        if (!this.canvas || !(this.canvas instanceof HTMLCanvasElement)) {
+            throw new Error('Invalid canvas');
+        }
+        const parent = this.canvas.parentNode as HTMLElement;
+        if (!parent) {
+            throw new Error('Unattached Canvas');
+        }
         this.opts = Object.assign(this.opts, {
-            dim: opts.dim,
+            dim: opts.dim || Math.min(parent.clientWidth, parent.clientHeight), 
             debug: opts.debug || this.opts.debug,
         });
         if (!this.opts.dim || Number.isNaN(this.opts.dim)) {
             throw new Error('Invalid dimension');
-        }
-        if (!this.canvas || !(this.canvas instanceof HTMLCanvasElement)) {
-            throw new Error('Invalid canvas');
         }
         this.log('options', this.opts);
         this.log('KeyBoardShorcuts', { ...Keys });
@@ -125,18 +130,7 @@ export default class Gregtris {
             throw new Error('Missing Rendering Context');
         }
         this.ctx = ctx;
-        this.gridSize = Math.floor(this.opts.dim / GAME_ROWS) * MX;
-        if (this.gridSize % GAME_SIZE_DIVISOR !== 0) {
-            this.gridSize = Math.floor(this.gridSize / GAME_SIZE_DIVISOR) * GAME_SIZE_DIVISOR; 
-        }
-        this.log('gridSize', this.gridSize);
-        this.height = this.gridSize * GAME_ROWS;
-        this.width = Math.ceil(this.height * DIMENSION_RATIO);
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        this.log('dimensions', this.width, 'x', this.height);
-        this.canvas.style.width = `${Math.floor(this.width / MX)}px`;
-        this.canvas.style.height = `${Math.floor(this.height / MX)}px`;
+        this.size();
         for(let r = 0; r < ROWS; r++) {
             const row: string[] = [];
             for (let c = 0; c < COLS; c++) {
@@ -152,6 +146,29 @@ export default class Gregtris {
 
         window.addEventListener('keydown', this.boundKeyDownListener);
         window.addEventListener('keyup', this.boundKeyUpListener);
+        window.addEventListener('resize', this.boundResizeListener);
+        window.addEventListener('orientationchange', this.boundResizeListener);
+    }
+
+    private resize() {
+        const parent = this.canvas.parentNode as HTMLElement;
+        this.opts.dim = Math.min(parent.clientWidth, parent.clientHeight),
+        this.size();
+    }
+
+    private size() {
+        this.gridSize = Math.floor(this.opts.dim / GAME_ROWS) * MX;
+        if (this.gridSize % GAME_SIZE_DIVISOR !== 0) {
+            this.gridSize = Math.floor(this.gridSize / GAME_SIZE_DIVISOR) * GAME_SIZE_DIVISOR; 
+        }
+        this.log('gridSize', this.gridSize);
+        this.height = this.gridSize * GAME_ROWS;
+        this.width = Math.ceil(this.height * DIMENSION_RATIO);
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.log('dimensions', this.width, 'x', this.height);
+        this.canvas.style.width = `${Math.floor(this.width / MX)}px`;
+        this.canvas.style.height = `${Math.floor(this.height / MX)}px`;
     }
 
     private log(...msg :any[]): void {

@@ -784,6 +784,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.loopCounter = 0;
             this.boundKeyDownListener = this.keyDownListener.bind(this);
             this.boundKeyUpListener = this.keyUpListener.bind(this);
+            this.boundResizeListener = this.resize.bind(this);
             this.boundLoop = this.loop.bind(this);
             this.loopHandlers = {
                 [constants_1.GAME_STATE_BEFORE_START]: this.loopBeforeStart.bind(this),
@@ -794,15 +795,19 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             };
             this.requestAnimationFrameHandle = null;
             this.canvas = canvas;
+            if (!this.canvas || !(this.canvas instanceof HTMLCanvasElement)) {
+                throw new Error('Invalid canvas');
+            }
+            const parent = this.canvas.parentNode;
+            if (!parent) {
+                throw new Error('Unattached Canvas');
+            }
             this.opts = Object.assign(this.opts, {
-                dim: opts.dim,
+                dim: opts.dim || Math.min(parent.clientWidth, parent.clientHeight),
                 debug: opts.debug || this.opts.debug,
             });
             if (!this.opts.dim || Number.isNaN(this.opts.dim)) {
                 throw new Error('Invalid dimension');
-            }
-            if (!this.canvas || !(this.canvas instanceof HTMLCanvasElement)) {
-                throw new Error('Invalid canvas');
             }
             this.log('options', this.opts);
             this.log('KeyBoardShorcuts', Object.assign({}, keys_1.default));
@@ -811,18 +816,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
                 throw new Error('Missing Rendering Context');
             }
             this.ctx = ctx;
-            this.gridSize = Math.floor(this.opts.dim / constants_1.GAME_ROWS) * constants_1.MX;
-            if (this.gridSize % constants_1.GAME_SIZE_DIVISOR !== 0) {
-                this.gridSize = Math.floor(this.gridSize / constants_1.GAME_SIZE_DIVISOR) * constants_1.GAME_SIZE_DIVISOR;
-            }
-            this.log('gridSize', this.gridSize);
-            this.height = this.gridSize * constants_1.GAME_ROWS;
-            this.width = Math.ceil(this.height * constants_1.DIMENSION_RATIO);
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
-            this.log('dimensions', this.width, 'x', this.height);
-            this.canvas.style.width = `${Math.floor(this.width / constants_1.MX)}px`;
-            this.canvas.style.height = `${Math.floor(this.height / constants_1.MX)}px`;
+            this.size();
             for (let r = 0; r < constants_1.ROWS; r++) {
                 const row = [];
                 for (let c = 0; c < constants_1.COLS; c++) {
@@ -837,6 +831,27 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             this.nextPiece = this.getRandomPiece();
             window.addEventListener('keydown', this.boundKeyDownListener);
             window.addEventListener('keyup', this.boundKeyUpListener);
+            window.addEventListener('resize', this.boundResizeListener);
+            window.addEventListener('orientationchange', this.boundResizeListener);
+        }
+        resize() {
+            const parent = this.canvas.parentNode;
+            this.opts.dim = Math.min(parent.clientWidth, parent.clientHeight),
+                this.size();
+        }
+        size() {
+            this.gridSize = Math.floor(this.opts.dim / constants_1.GAME_ROWS) * constants_1.MX;
+            if (this.gridSize % constants_1.GAME_SIZE_DIVISOR !== 0) {
+                this.gridSize = Math.floor(this.gridSize / constants_1.GAME_SIZE_DIVISOR) * constants_1.GAME_SIZE_DIVISOR;
+            }
+            this.log('gridSize', this.gridSize);
+            this.height = this.gridSize * constants_1.GAME_ROWS;
+            this.width = Math.ceil(this.height * constants_1.DIMENSION_RATIO);
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+            this.log('dimensions', this.width, 'x', this.height);
+            this.canvas.style.width = `${Math.floor(this.width / constants_1.MX)}px`;
+            this.canvas.style.height = `${Math.floor(this.height / constants_1.MX)}px`;
         }
         log(...msg) {
             if (this.opts.debug === true) {
