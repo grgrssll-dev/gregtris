@@ -691,7 +691,7 @@ define("keys", ["require", "exports"], function (require, exports) {
 define("rules", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.Scoring = exports.SOFT_DROP_SPEED = exports.MiliSecondsPerDrop = exports.Speeds = exports.RULE_LINES_LEVEL_CHANGE = exports.Durations = exports.DURATION_ROW_CLEAR_DURATION = exports.DURATION_LOCK_DOWN_DURATION = void 0;
+    exports.Scoring = exports.SOFT_DROP_SPEED = exports.MiliSecondsPerDrop = exports.MaxLevel = exports.Speeds = exports.RULE_LINES_LEVEL_CHANGE = exports.Durations = exports.DURATION_ROW_CLEAR_DURATION = exports.DURATION_LOCK_DOWN_DURATION = void 0;
     const frameRateMultiplier = 16.66666;
     exports.DURATION_LOCK_DOWN_DURATION = 500;
     exports.DURATION_ROW_CLEAR_DURATION = 1000;
@@ -717,6 +717,7 @@ define("rules", ["require", "exports"], function (require, exports) {
         14: 1.46,
         15: 2.36,
     };
+    exports.MaxLevel = Math.max(...Object.keys(exports.Speeds).map((k) => +k));
     exports.MiliSecondsPerDrop = Object.values(exports.Speeds).map((s) => (1 / s) * frameRateMultiplier);
     exports.SOFT_DROP_SPEED = (exports.MiliSecondsPerDrop[1]) / 20;
     exports.Scoring = {
@@ -730,6 +731,7 @@ define("rules", ["require", "exports"], function (require, exports) {
     const Rules = {
         Scoring: exports.Scoring,
         Speeds: exports.Speeds,
+        MaxLevel: exports.MaxLevel,
         MiliSecondsPerDrop: exports.MiliSecondsPerDrop,
         MiliSecondsSoftDrop: exports.SOFT_DROP_SPEED,
         MiliSecondsHardDrop: 1,
@@ -1339,7 +1341,7 @@ define("gregtris", ["require", "exports", "utils", "alphabet", "currentPiece", "
             let dropped = constants_1.DROP_STATE_WAITING;
             const diff = time - (this.pieceTime || 0);
             const showLog = this.loopCounter % 30 === 0;
-            let dropSpeed = rules_1.default.MiliSecondsPerDrop[this.level];
+            let dropSpeed = rules_1.default.MiliSecondsPerDrop[Math.min(this.level, rules_1.default.MaxLevel)];
             if (this.isSoftDrop) {
                 dropSpeed = rules_1.default.MiliSecondsSoftDrop;
             }

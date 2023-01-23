@@ -757,7 +757,7 @@ export default class Gregtris {
         let dropped: DropState = DROP_STATE_WAITING;
         const diff = time - (this.pieceTime || 0);
         const showLog = this.loopCounter % 30 === 0;
-        let dropSpeed = Rules.MiliSecondsPerDrop[this.level];
+        let dropSpeed = Rules.MiliSecondsPerDrop[Math.min(this.level, Rules.MaxLevel)];
         if (this.isSoftDrop) {
             dropSpeed = Rules.MiliSecondsSoftDrop;
         }

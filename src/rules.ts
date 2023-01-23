@@ -28,6 +28,8 @@ export const Speeds = {
     15: 2.36,
 };
 
+export const MaxLevel = Math.max(...Object.keys(Speeds).map((k) => +k));
+
 export const MiliSecondsPerDrop = Object.values(Speeds).map((s) => (1 / s) * frameRateMultiplier);
 
 export const SOFT_DROP_SPEED = (MiliSecondsPerDrop[1]) / 20;
@@ -44,6 +46,7 @@ export const Scoring: Record<string, Record<number, (n: number) => number>> = {
 const Rules = {
     Scoring,
     Speeds,
+    MaxLevel,
     MiliSecondsPerDrop,
     MiliSecondsSoftDrop: SOFT_DROP_SPEED,
     MiliSecondsHardDrop: 1,

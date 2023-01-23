@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc --project ./tsconfig.json",
     "dev": "tsc --project ./tsconfig.json --watch",
-    "clean": "rm dist/*"
+    "clean": "rm dist/*",
+    "deploy": "scp -r * root@173.230.153.81:/var/www/gregtris.grgr.us"
   },
   "author": "",
   "license": "ISC",
