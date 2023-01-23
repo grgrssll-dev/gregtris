@@ -280,12 +280,7 @@ export default class Gregtris {
         }
         if (this.canRotate()) {
             this.currentPiece = this.currentPiece.clone(DIR_RIGHT);
-            if (this.currentPiece.getX() + this.currentPiece.getCols() > COLS) {
-                this.currentPiece.setX(COLS - this.currentPiece.getCols());
-            }
-            if (this.currentPiece.getY() + this.currentPiece.getRows() > ROWS) {
-                this.currentPiece.setY(COLS - this.currentPiece.getRows());
-            }
+            this.fixPosition(this.currentPiece);
         }
     }
 
@@ -403,15 +398,6 @@ export default class Gregtris {
             this.px(this.conts.modal.y), 
             this.px(this.conts.modal.width), 
             this.px(this.conts.modal.height)
-        );
-    }
-
-    private clearModal() {
-        this.ctx.clearRect(
-            this.px(this.conts.modal.x) + PX, 
-            this.px(this.conts.modal.y) + PX, 
-            this.px(this.conts.modal.width) + (PX * 2), 
-            this.px(this.conts.modal.height) + (PX * 2)
         );
     }
 
@@ -603,19 +589,6 @@ export default class Gregtris {
         }
     }
 
-    private logBucket() {
-        this.bucket.forEach((r, i) => this.log(`${i}`.padStart(2, '0'), '|', r.map(c => +(!!c)).join(',')));
-    }
-
-    private clearBucketRectangle() {
-        this.ctx.clearRect(
-            this.px(this.conts.board.x) + PX, 
-            this.px(this.conts.board.y) + PX, 
-            this.px(this.conts.board.width) - (PX * 2),
-            this.px(this.conts.board.height) - (PX * 2)
-        );
-    }
-
     private drawBucket(rows: number[] = [], tween: number = 1) {
         rows.length ? this.log('DrawBucket',rows, tween) : null;
         for (let y = 0; y < this.bucket.length; y++) {
@@ -647,74 +620,43 @@ export default class Gregtris {
         this.setScore(this.currentScore + scoreInc);
     }
 
-    private canPieceFit(piece: Piece, toX: number, toY: number) :boolean {
-        let canMove = true;
-        const matrix = piece.getMatrix();
-        const rows = piece.getRows();
-        const cols = piece.getCols();
-        const firstCol = 0;
-        const lastCol = cols - 1;
-        const lastRow = rows - 1;
-        // off board
-        if (toX < 0 || toX + lastCol >= COLS || toY < 0 || toY + lastRow >= ROWS) {
-            return false;
-        }
-        for (let i = 0; i < rows; i++) {
-            const row = matrix[i];
-            if (!!row[firstCol] && !!this.bucket[toY + i][toX + firstCol]) {
-                this.log('fail fit firstCol', toX + firstCol, toY + i, this.bucket[toY + i][toX + firstCol]);
-                return false;
-            }
-            if (!!row[lastCol] && !!this.bucket[toY + i][toX + lastCol]) {
-                this.log('fail fit lastCol', toX + lastCol, toY + i, this.bucket[toY + i][toX + lastCol]);
-                return false;
-            }
-        }
-        for (let i = 0; i < cols; i++) {
-            const row = matrix[lastRow];
-            if (!!row[i] && !!this.bucket[toY + lastRow][toX + i]) {
-                this.log('fail fit lastRow', toX + i, toY + lastRow, this.bucket[toY + lastRow][toX + i]);
-                return false;
-            }
-        }
-
-        return canMove;
-    }
-
     private canMoveRight() :boolean {
-        return this.canPieceFit(this.currentPiece, this.currentPiece.getX() + 1, this.currentPiece.getY());
+        return !this.doesOverlap(this.currentPiece, this.currentPiece.getX() + 1, this.currentPiece.getY());
     }
 
     private canMoveLeft() :boolean {
-        return this.canPieceFit(this.currentPiece, this.currentPiece.getX() - 1, this.currentPiece.getY());
+        return !this.doesOverlap(this.currentPiece, this.currentPiece.getX() - 1, this.currentPiece.getY());
     }
 
     private canMoveDown() :boolean {
-        return this.canPieceFit(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY() + 1);
+        return !this.doesOverlap(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY() + 1);
     }
 
     private canRotate(): boolean {
-        const canRotate = true;
         const piece = this.currentPiece.clone();
         piece.rotate(DIR_RIGHT);
-        let pX = piece.getX();
-        let pY = piece.getY();
+        this.fixPosition(piece);
+        return !this.doesOverlap(piece, piece.getX(), piece.getY());
+    }
+
+    private doesOverlap(piece: Piece, x: number, y: number) {
+        if (x < 0 || y < 0 || x + piece.getCols() > COLS || y + piece.getRows() > ROWS) {
+            return true;
+        }
         const matrix = piece.getMatrix();
-        if (pX + piece.getCols() > COLS) {
-            pX = COLS - piece.getCols();
-        }
-        if (pY + piece.getRows() > ROWS) {
-            pY = COLS - piece.getRows();
-        }
-        for (let y = 0; y < piece.getRows(); y++) {
-            for (let x = 0; x < piece.getCols(); x++) {
-                if (matrix[y][x] && this.bucket[pY + y][pX + x]) {
-                    return false;
+        for (let bY = 0; bY < piece.getRows(); bY++) {
+            for (let bX = 0; bX < piece.getCols(); bX++) {
+                if (matrix[bY][bX] && this.bucket[y + bY][x + bX]) {
+                    return true;
                 }
             }
         }
+        return false;
+    }
 
-        return canRotate;
+    private fixPosition(piece: CurrentPiece) {
+        piece.setX(Math.max(0, Math.min(piece.getX(), COLS - 1)));
+        piece.setY(Math.max(0, Math.min(piece.getY(), ROWS - 1)));
     }
 
     private detectFullRows(): number[] {
@@ -810,7 +752,7 @@ export default class Gregtris {
                     this.endGame();
                 }
                 this.log('Dropped');
-                const canAdd = this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
+                this.addPieceToBucket(this.currentPiece, this.currentPiece.getX(), this.currentPiece.getY());
                 this.initializePiece();
                 this.clearDropPieceModifier(true);
                 dropped = DROP_STATE_STOPPED;

@@ -35,8 +35,10 @@ export default class CurrentPiece extends Piece {
         const beforeCols = this.getCols();
         const afterCols = this.getRows();
         super.rotate(direction);
-        const multiplier = beforeCols - afterCols < 0 ? -1 : 1;
-        this.setX(this.getX() + (multiplier * Math.floor(Math.abs(beforeCols - afterCols) / 2)));
+        const xMultiplier = beforeCols - afterCols < 0 ? -1 : 1;
+        this.setX(this.getX() + (xMultiplier * Math.floor(Math.abs(beforeCols - afterCols) / 2)));
+        const yMultiplier = afterCols - beforeCols < 0 ? -1 : 1;
+        this.setY(this.getY() + (yMultiplier * Math.floor(Math.abs(afterCols - beforeCols) / 2)));
         return this;
     }
 
